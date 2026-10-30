@@ -1,0 +1,1588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>3D Vision Module 4 Concepts</title>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: presenter deck, one concept per screen grouped by Lecture 4.1 / 4.2 / 4.3; canvas left, controls + ask-the-class + math right, one-line takeaway at the bottom. Dark-first. */
+:root{
+  --bg:#10131a; --panel:#181d27; --canvas:#0c0f15; --line:#2a3242;
+  --fg:#e9edf5; --dim:#98a2b6;
+  --amber:#ffb454; --sky:#6cb6ff; --ok:#7bd88f; --bad:#ff7d7d; --paper:#f4f5f7;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f2f4f8; --panel:#ffffff; --canvas:#e9edf4; --line:#cfd6e3;
+  --fg:#172033; --dim:#55607a;
+  --amber:#b45f00; --sky:#1b62ad; --ok:#1c7a38; --bad:#bd2f2f; --paper:#ffffff; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f2f4f8; --panel:#ffffff; --canvas:#e9edf4; --line:#cfd6e3;
+  --fg:#172033; --dim:#55607a;
+  --amber:#b45f00; --sky:#1b62ad; --ok:#1c7a38; --bad:#bd2f2f; --paper:#ffffff; color-scheme:light}
+:root[data-theme="dark"]{
+  --bg:#10131a; --panel:#181d27; --canvas:#0c0f15; --line:#2a3242;
+  --fg:#e9edf5; --dim:#98a2b6;
+  --amber:#ffb454; --sky:#6cb6ff; --ok:#7bd88f; --bad:#ff7d7d; --paper:#f4f5f7; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-inline:16px;padding-block:14px 48px}
+.wrap{max-width:1080px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+button{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--sky)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+button.pri{background:var(--sky);color:var(--bg);border-color:var(--sky);font-weight:500}
+button[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+
+/* Field Scout progress log */
+.scout{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:14px}
+@media (max-width:900px){.scout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sc{text-align:left;display:grid;gap:4px;padding:9px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;line-height:1.4;min-height:96px}
+.sc b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.sc .q{color:var(--fg)}
+.sc .f{color:var(--ok);font-family:var(--mono);font-size:11.5px}
+.sc.done{border-color:var(--ok)}
+.sc[aria-current="true"]{border-color:var(--amber)}
+.stepbar{display:flex;align-items:center;gap:14px;margin-block:18px 6px;flex-wrap:wrap}
+.count{font-family:var(--mono);font-size:34px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.count span{color:var(--dim);font-size:20px}
+.nav{margin-left:auto;display:flex;gap:8px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.1;font-weight:700;margin-block:8px 4px}
+h2{font-size:clamp(20px,3vw,26px);line-height:1.2;font-weight:600;margin-block:2px 8px}
+.sub{color:var(--dim);margin:0 0 16px;max-width:70ch}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin:0 0 6px}
+.tag.tu{color:var(--sky)}
+.lead{margin:0 0 14px;max-width:72ch}
+
+/* hook */
+.hook{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:22px}
+@media (max-width:820px){.hook{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;min-width:0}
+figure img{display:block;width:100%;max-width:100%;height:auto;border-radius:8px;background:var(--paper)}
+figcaption{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:6px}
+.hook ul{margin:10px 0 0;padding-left:18px}
+.hook li{margin-block:4px}
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+@media (max-width:640px){.strip{grid-template-columns:minmax(0,1fr)}}
+
+.sec{margin-block:0 34px}
+.sec>.grid{margin-top:6px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.stages{display:grid;gap:14px;min-width:0}
+.stage{background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:8px}
+canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:6px;touch-action:none}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ctl{display:grid;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.row{display:grid;grid-template-columns:minmax(0,8em) minmax(0,1fr) minmax(0,5.5em);gap:10px;align-items:center}
+.row label{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.row output{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.chk{display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--dim)}
+input[type=range]{width:100%;accent-color:var(--amber)}
+.read{font-family:var(--mono);font-size:13px;color:var(--amber);margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.pred{border:1px dashed var(--line);border-radius:10px;padding:12px 14px}
+.pred p{margin:6px 0 8px}
+.ans{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.mathbtn{align-self:flex-start;font-family:var(--mono)}
+.math{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto}
+.math p{margin:0 0 6px;white-space:pre-wrap}
+.math h4{margin:10px 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.math table{border-collapse:collapse;min-width:100%;font-variant-numeric:tabular-nums}
+.math th,.math td{padding:3px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.math th{color:var(--dim);font-weight:500}
+.hl{color:var(--amber)} .okc{color:var(--ok)}
+.check{color:var(--dim);font-size:14px;margin:0}
+.check b{color:var(--fg)}
+.membar{height:10px;background:var(--canvas);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.membar i{display:block;height:100%;background:var(--amber);width:50%}
+
+/* pipeline strip (Day 3) */
+.pipe{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:820px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:11.5px;line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.pc b{display:block;color:var(--amber);font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+.pc i{display:block;color:var(--dim);font-style:normal;margin-bottom:4px}
+.pc span{color:var(--fg)}
+
+/* sensor picker (Day 1) */
+.pick{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:8px}
+.pick p{margin:0}
+.pick .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+
+/* story */
+.storycard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.narr{margin:0 0 12px;max-width:72ch}
+.chat{display:grid;gap:14px}
+.turn{display:grid;gap:8px;max-width:72ch}
+.bub{margin:0;padding:10px 12px;border-radius:8px;background:var(--canvas);border:1px solid var(--line)}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opts button.ok{border-color:var(--ok);color:var(--ok)}
+.opts button.bad{border-color:var(--bad);color:var(--bad)}
+.fb{margin:0;font-size:14px}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.bridge{margin:0;padding:12px 14px;border-left:3px solid var(--amber);background:var(--panel);border-radius:0 8px 8px 0;max-width:80ch}
+[hidden]{display:none!important}
+/* Module 2 additions */
+.slide{background:var(--canvas);border:1px solid var(--line);border-left:3px solid var(--sky);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;min-width:0;overflow-x:auto}
+.slide .sl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+.slide pre{margin:0;white-space:pre-wrap;font:inherit;color:var(--fg)}
+.slide table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.slide th,.slide td{padding:3px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.slide th{color:var(--dim);font-weight:500}
+.slide tr.on td{color:var(--amber)}
+.rig{display:grid;gap:8px}
+.rig p{margin:0}
+.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{color:var(--dim);font-weight:500}
+.step-note{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin:0}
+</style>
+
+<style>
+body{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-block:12px;border-bottom:1px solid var(--line)}
+.top .brand{margin-right:auto}
+.lecs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.lec{display:grid;gap:2px;text-align:left;padding:8px 12px;min-width:0}
+.lec b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--dim);font-weight:500}
+.lec[aria-current="true"]{border-color:var(--amber)}
+.lec[aria-current="true"] b{color:var(--amber)}
+.ix{columns:3 16em;column-gap:24px;margin:10px 0 0;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.ix h3{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin:8px 0 4px;font-weight:500;break-after:avoid}
+.ix a{display:block;color:var(--fg);text-decoration:none;font-size:14px;padding:2px 0;break-inside:avoid}
+.ix a span{font-family:var(--mono);color:var(--dim);margin-right:6px;font-variant-numeric:tabular-nums}
+.ix a[aria-current="true"]{color:var(--amber)}
+.ix a em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--sky);margin-left:4px}
+.notes{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+@media (max-width:820px){.notes{grid-template-columns:minmax(0,1fr)}}
+.nl{display:grid;gap:10px;min-width:0}.nl p{margin:0;max-width:72ch}
+.nchips{display:flex;flex-wrap:wrap;gap:8px}
+.nchip{display:inline-flex;gap:8px;align-items:baseline;padding:6px 10px;border:1px solid var(--sky);border-radius:6px;color:var(--fg);text-decoration:none;font-size:14px}
+.nchip b{font-family:var(--mono);color:var(--sky);font-weight:500}
+.nchip:hover,.nchip:focus-visible{background:var(--panel)}
+.nhook b,.nrem b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:500;margin-right:6px}
+.nrem{padding:10px 14px;background:var(--panel);border-radius:8px}
+.notes a{color:var(--sky)}
+.nq{min-width:0}
+mjx-container{overflow-x:auto;max-width:100%}
+details summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--dim);list-style:none;display:inline-block;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+details summary::-webkit-details-marker{display:none}
+.like{margin:0 0 12px;max-width:72ch;padding:10px 14px;border-left:3px solid var(--sky);background:var(--panel);border-radius:0 8px 8px 0}
+.like b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sky);font-weight:500;margin-right:8px}
+.one{margin:22px 0 0;padding:12px 14px;border-left:3px solid var(--amber);background:var(--panel);border-radius:0 8px 8px 0;max-width:80ch;font-size:16px}
+.one b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-right:8px}
+.step{padding-top:6px}
+html.proj body{font-size:18px}
+html.proj .wrap{max-width:1500px}
+html.proj .grid{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+html.proj h1{font-size:clamp(30px,4vw,48px)}
+html.proj .one{font-size:20px}
+html.proj .row label,html.proj .read,html.proj .math{font-size:14px}
+@media (max-width:820px){html.proj .grid{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<div class="wrap nomj">
+<div class="top">
+  <div class="brand">3D Vision · NeRFs &amp; INR · Module 4 concepts</div>
+  <details id="ixd"><summary>All 30 concepts</summary><nav class="ix" id="ix" aria-label="All concepts"><h3>Lecture 4.1</h3><a href="#c1"><span>01</span>Same shape, different material</a><a href="#c2"><span>02</span>Lambert: matte reflection</a><a href="#c3"><span>03</span>Phong: the moving highlight</a><a href="#c4"><span>04</span>Cook-Torrance: microfacets and Fresnel</a><a href="#c5"><span>05</span>Learning reflectance from views</a><a href="#c6"><span>06</span>Taking a photo apart: albedo × shading</a><a href="#c7"><span>07</span>Normals from several lights: photometric stereo</a><a href="#c8"><span>08</span>Visibility: who sees the sun and the sky</a><a href="#c9"><span>09</span>Lighting in a few numbers</a><a href="#c10"><span>10</span>Relighting: same scene, new sun</a><a href="#c11"><span>11</span>Material editing</a><a href="#c12"><span>12</span>Why relight field scans: sun by the hour</a><h3>Lecture 4.2</h3><a href="#c13"><span>13</span>The bottleneck: time per frame</a><a href="#c14"><span>14</span>The bottleneck: memory</a><a href="#c15"><span>15</span>Multi-resolution hash encoding</a><a href="#c16"><span>16</span>Pruning and quantization</a><a href="#c17"><span>17</span>Knowledge distillation</a><a href="#c18"><span>18</span>Splatting: stop when the pixel is full</a><a href="#c19"><span>19</span>View-dependent color costs numbers</a><a href="#c20"><span>20</span>MobileNeRF: triangles, then a tiny network</a><a href="#c21"><span>21</span>Size against quality: the frontier</a><a href="#c22"><span>22</span>How do we score a render? PSNR and SSIM</a><h3>Lecture 4.3</h3><a href="#c23"><span>23</span>AR occlusion: in front or behind?</a><a href="#c24"><span>24</span>Latency: the picture arrives late</a><a href="#c25"><span>25</span>Slice a neural field: a CT scan for plants</a><a href="#c26"><span>26</span>Images + LiDAR: trust each where it is good</a><a href="#c27"><span>27</span>Hyperspectral: NDVI from albedo, not raw pixels</a><a href="#c28"><span>28</span>Dynamic scenes: wind</a><a href="#c29"><span>29</span>Generalization: a prior from many plants</a><a href="#c30"><span>30</span>Frontiers: generate plants, model growth in 4D</a></nav></details>
+  <button id="projBtn" type="button" aria-pressed="false">Projector size</button>
+  <button id="fsBtn" type="button">Full screen</button>
+  <button id="themeBtn" type="button">Theme</button>
+</div>
+<div class="lecs"><button type="button" class="lec" data-lec="4.1" aria-current="false"><b>LECTURE 4.1</b><span>Realism: lighting, materials, relighting</span></button><button type="button" class="lec" data-lec="4.2" aria-current="false"><b>LECTURE 4.2</b><span>Efficiency and compression</span></button><button type="button" class="lec" data-lec="4.3" aria-current="false"><b>LECTURE 4.3</b><span>Applications and the road ahead</span></button></div>
+
+<div class="stepbar">
+  <div class="count" id="count">01 <span>/ 30</span></div>
+  <div class="nav">
+    <button id="prev" type="button" aria-label="Previous concept">← Prev</button>
+    <button id="next" type="button" class="pri" aria-label="Next concept">Next →</button>
+  </div>
+</div>
+
+<section class="step" data-i="0">
+  <p class="tag">Lecture 4.1 · slides 3–4 · Motivation: beyond geometry</p>
+  <h1>Same shape, different material</h1>
+  <p class="like"><b>Like</b>A chocolate bunny and a plaster bunny come out of the same mold. You still never mix them up.</p>
+  <p class="lead">Every sphere here has identical geometry and identical light. Only the material numbers change: ambient, diffuse, specular color and shininess, taken from the Learn OpenGL material table your slide uses. Pick a material and move the light.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n01" aria-label="One sphere rendered per pixel with the chosen material"></canvas></div></div>
+    <div class="side">
+      <div class="btns" id="matBtns"><button type="button" data-mat="emerald" aria-pressed="true">Emerald</button><button type="button" data-mat="pearl" aria-pressed="false">Pearl</button><button type="button" data-mat="bronze" aria-pressed="false">Bronze</button><button type="button" data-mat="gold" aria-pressed="false">Gold</button><button type="button" data-mat="cyan plastic" aria-pressed="false">Cyan plastic</button><button type="button" data-mat="red plastic" aria-pressed="false">Red plastic</button><button type="button" data-mat="green rubber" aria-pressed="false">Green rubber</button><button type="button" data-mat="yellow rubber" aria-pressed="false">Yellow rubber</button></div><div class="ctl"><ctl id="az01" label="light left–right" min="-80" max="80" step="1" value="40" unit="°"></ctl><ctl id="el01" label="light height" min="-30" max="80" step="1" value="35" unit="°"></ctl><p class="read" id="r01"></p></div>
+      <pred k="q01"></pred>
+      <mbox k="m01" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Geometry gives the outline. The material numbers give the look.</p>
+  
+</section>
+<section class="step" data-i="1" hidden>
+  <p class="tag">Lecture 4.1 · slide 5 · Lambertian model</p>
+  <h1>Lambert: matte reflection</h1>
+  <p class="like"><b>Like</b>A solar panel collects the most when it faces the sun squarely.</p>
+  <p class="lead">A matte leaf scatters light equally in every direction. Its brightness depends only on how squarely it faces the sun, the n·l term. Move the sun and tilt the leaf.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c1a" aria-label="Side view of a tilted leaf lit by the sun, and brightness against sun elevation"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="e1a" label="sun elevation" min="5" max="90" step="1" value="30" unit="°"></ctl><ctl id="b1a" label="leaf tilt" min="-60" max="60" step="1" value="0" unit="°"></ctl><ctl id="rho1a" label="albedo ρ" min="0.02" max="0.6" step="0.01" value="0.1"></ctl><p class="read" id="r1a"></p></div>
+      <pred k="p1a"></pred>
+      <mbox k="m1a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Matte brightness = albedo × cos(angle to the light), and it looks the same from every camera.</p>
+  
+</section>
+<section class="step" data-i="2" hidden>
+  <p class="tag">Lecture 4.1 · slide 5 · Phong model</p>
+  <h1>Phong: the moving highlight</h1>
+  <p class="like"><b>Like</b>The sun glint on a car windshield slides along as you walk past.</p>
+  <p class="lead">A waxy leaf also reflects like a weak mirror, so a bright spot appears near the mirror direction and moves with the viewer. The exponent s sets how tight it is: rubber is wide, polished plastic is tight.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c1b" aria-label="Polar plot of reflected brightness around a flat leaf with a moving viewer"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="e1b" label="sun elevation" min="10" max="85" step="1" value="40" unit="°"></ctl><ctl id="v1b" label="viewer angle" min="0" max="180" step="1" value="140" unit="°"></ctl><ctl id="ks1b" label="shine ks" min="0" max="1" step="0.05" value="0.5"></ctl><ctl id="s1b" label="exponent s" min="1" max="200" step="1" value="10"></ctl><p class="read" id="r1b"></p></div>
+      <pred k="p1b"></pred>
+      <mbox k="m1b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Highlight = ks·cosˢ(angle from mirror). Bigger s, tighter spot.</p>
+  
+</section>
+<section class="step" data-i="3" hidden>
+  <p class="tag">Lecture 4.1 · slide 5 · Cook-Torrance model</p>
+  <h1>Cook-Torrance: microfacets and Fresnel</h1>
+  <p class="like"><b>Like</b>Calm water mirrors the sun sharply. Ripples smear it into a wide glitter path, and the glare is strongest looking across the lake.</p>
+  <p class="lead">The surface is treated as millions of tiny mirrors. Roughness α sets how much their tilts vary, which sets the highlight width (the D term). Fresnel (F) says every surface reflects more at grazing angles.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c1c" aria-label="Microfacet distribution against angle, and Fresnel reflectance against incidence angle"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="a1c" label="roughness α" min="0.05" max="1" step="0.05" value="0.3"></ctl><ctl id="F1c" label="F₀ (at 0°)" min="0.02" max="1" step="0.01" value="0.04"></ctl><ctl id="t1c" label="incidence θ" min="0" max="89" step="1" value="60" unit="°"></ctl><p class="read" id="r1c"></p></div>
+      <pred k="p1c"></pred>
+      <mbox k="m1c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Roughness sets the width, F₀ sets the strength, and everything glares at grazing angles.</p>
+  
+</section>
+<section class="step" data-i="4" hidden>
+  <p class="tag">Lecture 4.1 · slides 6 and 8 · Neural reflectance models, practical considerations</p>
+  <h1>Learning reflectance from views</h1>
+  <p class="like"><b>Like</b>Tasting soup with a few spoonfuls: if you never dip where the spice settled, you miss it.</p>
+  <p class="lead">A neural reflectance model is not given Phong. It learns brightness-versus-view from photos. Here a small learned model (a sum of lobes with fitted weights) sees only the camera views you allow. Few views, and it usually misses the highlight. This is the 'needs extensive data' point on slide 8.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n05" aria-label="Observed views as dots, the true reflectance curve and the learned curve"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="nv05" label="camera views" min="2" max="48" step="1" value="6"></ctl><ctl id="s05" label="shininess s" min="5" max="150" step="1" value="40"></ctl><ctl id="sd05" label="pixel noise" min="0" max="0.05" step="0.005" value="0.01"></ctl><div class="btns"><button type="button" id="new05">New camera positions</button></div><p class="read" id="r05"></p></div>
+      <pred k="q05"></pred>
+      <mbox k="m05" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>A learned material is only as good as the view directions it was shown.</p>
+  
+</section>
+<section class="step" data-i="5" hidden>
+  <p class="tag">Lecture 4.1 · slide 6 · NeRFactor: albedo</p>
+  <h1>Taking a photo apart: albedo × shading</h1>
+  <p class="like"><b>Like</b>A white shirt in shade and a gray shirt in sun can give the same pixel.</p>
+  <p class="lead">Pixel = the leaf's own color (albedo) × the light it got (shading). One photo cannot separate them: double one and halve the other. The Retinex rule guesses that sharp jumps are paint and slow changes are light. It works until a shadow has a sharp edge.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c2a" aria-label="Strips of a photo, true albedo, estimated albedo and shading, and the log-gradient with a threshold"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="k2a" label="ambiguity k" min="0.5" max="2" step="0.05" value="1"></ctl><ctl id="t2a" label="jump threshold" min="0.02" max="0.8" step="0.02" value="0.1"></ctl><ctl id="ed2a" label="shadow softness" min="0.1" max="12" step="0.1" value="1" unit=" px"></ctl><p class="read" id="r2a"></p></div>
+      <pred k="p2a"></pred>
+      <mbox k="m2a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>One photo has two unknowns per pixel, so the split always needs an extra assumption or more photos.</p>
+  
+</section>
+<section class="step" data-i="6" hidden>
+  <p class="tag">Lecture 4.1 · slide 6 · NeRFactor: normals</p>
+  <h1>Normals from several lights: photometric stereo</h1>
+  <p class="like"><b>Like</b>Sweeping a flashlight across a coin to read its raised letters.</p>
+  <p class="lead">Keep the camera fixed and switch lights on one at a time. Each light gives one equation I = ρ·(n·l). Enough lights solve for the normal n and the albedo ρ. Bunched lights let noise win.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c2b" aria-label="Leaf profile with true and recovered normals, three lights, and recovered albedo"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="sp2b" label="light spread" min="2" max="60" step="1" value="5" unit="°"></ctl><ctl id="sd2b" label="pixel noise" min="0" max="0.08" step="0.005" value="0.02"></ctl><div class="btns"><button type="button" id="new2b">New noise</button></div><p class="read" id="r2b"></p></div>
+      <pred k="p2b"></pred>
+      <mbox k="m2b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Spread-out lights work like a wide stereo baseline: they make the equations well conditioned.</p>
+  
+</section>
+<section class="step" data-i="7" hidden>
+  <p class="tag">Lecture 4.1 · slide 6 · NeRFactor: visibility</p>
+  <h1>Visibility: who sees the sun and the sky</h1>
+  <p class="like"><b>Like</b>Standing under a tree: are you in a sun fleck, and how much open sky is above you?</p>
+  <p class="lead">Visibility asks, for each point and direction, whether a ray escapes. Under a canopy, a soil point is either in a sun fleck or in shadow, and it sees only part of the sky.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c2c" aria-label="Side view of a canopy with a sun ray and sky rays from a ground point, and visibility along the ground"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="n2c" label="leaves" min="0" max="60" step="1" value="25"></ctl><ctl id="e2c" label="sun elevation" min="10" max="90" step="1" value="50" unit="°"></ctl><ctl id="x2c" label="ground point" min="0.05" max="3.95" step="0.05" value="2" unit=" m"></ctl><p class="read" id="r2c"></p></div>
+      <pred k="p2c"></pred>
+      <mbox k="m2c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>The sun gives on/off shadows; the sky gives a smooth fraction.</p>
+  
+</section>
+<section class="step" data-i="8" hidden>
+  <p class="tag">Lecture 4.1 · slide 6 · NeRFactor: illumination</p>
+  <h1>Lighting in a few numbers</h1>
+  <p class="like"><b>Like</b>A matte leaf hears only the bass notes of the sky, so a few low notes are enough to describe what it sees.</p>
+  <p class="lead">Store the whole sky as a sum of waves (harmonics). A sharp sun needs many waves. A matte leaf adds light over half the sky with a cos weight, which blurs away fast waves, so its shading needs very few. Real systems use 9 spherical-harmonic numbers per color.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c3b" aria-label="Sky light around a circle and the matte shading it produces, each with a truncated harmonic version"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="K3b" label="harmonics K" min="0" max="16" step="1" value="2"></ctl><ctl id="sh3b" label="sun sharpness" min="2" max="200" step="1" value="40"></ctl><ctl id="s3b" label="sun angle" min="20" max="160" step="1" value="60" unit="°"></ctl><p class="read" id="r3b"></p></div>
+      <pred k="p3b"></pred>
+      <mbox k="m3b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Matte shading is a blurred sky, so about 5 numbers (2D) or 9 (3D) describe it.</p>
+  
+</section>
+<section class="step" data-i="9" hidden>
+  <p class="tag">Lecture 4.1 · slide 7 · Free-viewpoint relighting</p>
+  <h1>Relighting: same scene, new sun</h1>
+  <p class="like"><b>Like</b>A stage set is built once. The lighting crew moves the lights later.</p>
+  <p class="lead">The plot was captured with the sun at 50°. A plain NeRF stores the colors it saw, shadows included. A factored model stores albedo, normals and visibility, so it can recompute shading for any sun.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c3a" aria-label="Side view of three plants with the sun, and strips for captured, plain NeRF and relit images"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="th3a" label="sun angle" min="10" max="170" step="2" value="130" unit="°"></ctl><ctl id="sk3a" label="sky share" min="0" max="0.6" step="0.05" value="0.2"></ctl><p class="read" id="r3a"></p></div>
+      <pred k="p3a"></pred>
+      <mbox k="m3a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Relit image = albedo × shading for the new light. A plain NeRF cannot do this.</p>
+  
+</section>
+<section class="step" data-i="10" hidden>
+  <p class="tag">Lecture 4.1 · slide 7 · Material editing; slide 9 · use cases</p>
+  <h1>Material editing</h1>
+  <p class="like"><b>Like</b>A car configurator repaints the car without rebuilding it.</p>
+  <p class="lead">With the scene factored, change the leaves' albedo and shine and keep everything else. That is material editing: a virtual product showcase, or a 'what if this plot yellowed?' preview. Shadows and shape stay put because only the material map changed.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n11" aria-label="Plot row before and after editing the leaf material"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="y11" label="leaf yellowing" min="0" max="1" step="0.05" value="0.5"></ctl><ctl id="b11" label="leaf brightness" min="0.5" max="2" step="0.05" value="1"></ctl><ctl id="g11" label="leaf gloss" min="0" max="1" step="0.05" value="0"></ctl><ctl id="th11" label="sun angle" min="10" max="170" step="2" value="50" unit="°"></ctl><p class="read" id="r11"></p></div>
+      <pred k="q11"></pred>
+      <mbox k="m11" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Change one factor and re-multiply: new material, same light, same shape.</p>
+  
+</section>
+<section class="step" data-i="11" hidden>
+  <p class="tag">Lecture 4.1 · slide 9 · use cases (agriculture)</p>
+  <h1>Why relight field scans: sun by the hour</h1>
+  <p class="like"><b>Like</b>Walking diagonally across a crowded room, you bump into more people than walking straight across.</p>
+  <p class="lead">Beer-Lambert light interception with a moving sun. A low sun crosses more leaves on its way down (path ∝ 1/sin e), so lower leaves get less light. Two plots scanned at 7 am and noon differ partly because of the clock.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c3c" aria-label="Sun elevation through the day and light reaching each canopy depth now and at noon"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="h3c" label="hour (solar)" min="5" max="19" step="0.25" value="9"></ctl><ctl id="d3c" label="day of year" min="1" max="365" step="1" value="196"></ctl><ctl id="L3c" label="total LAI" min="0.5" max="6" step="0.1" value="3.5"></ctl><p class="read" id="r3c"></p></div>
+      <pred k="p3c"></pred>
+      <mbox k="m3c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Compare field scans at the same light, or relight them first.</p>
+  
+</section>
+<section class="step" data-i="12" hidden>
+  <p class="tag">Lecture 4.2 · slide 4 · The bottleneck: speed</p>
+  <h1>The bottleneck: time per frame</h1>
+  <p class="like"><b>Like</b>A flipbook: every page must be drawn in 16.7 ms to look smooth at 60 fps.</p>
+  <p class="lead">A frame costs pixels × work per pixel. A classic NeRF asks a big network at every sample on every ray. Instant-NGP asks a tiny one. MobileNeRF runs one tiny network per pixel. Splatting blends a few dozen splats per pixel. Rough counts at 30% of peak chip speed.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c5a" aria-label="Bar chart of milliseconds per frame on a log scale with 60 and 30 fps lines"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="h5a" label="image height" min="360" max="1440" step="120" value="1080" unit=" px"></ctl><ctl id="sp5a" label="samples per ray" min="8" max="192" step="8" value="64"></ctl><ctl id="tf5a" label="chip TFLOPS" min="0.5" max="80" step="0.5" value="1"></ctl><p class="read" id="r5a"></p></div>
+      <pred k="p5a"></pred>
+      <mbox k="m5a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Speed is set by how many times you ask a network per pixel.</p>
+  
+</section>
+<section class="step" data-i="13" hidden>
+  <p class="tag">Lecture 4.2 · slide 4 · The bottleneck: memory</p>
+  <h1>The bottleneck: memory</h1>
+  <p class="like"><b>Like</b>Packing a carry-on with a weight limit.</p>
+  <p class="lead">Each method stores something different: network weights, hash tables, or a list of Gaussians. A Gaussian holds position 3, scale 3, rotation 4, opacity 1 and color 3·(deg+1)². Compare with a 50 MB field download.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c4c" aria-label="Bar chart of model size on a log scale"></canvas></div></div>
+    <div class="side">
+      <div class="btns" id="bitBtns"><button type="button" data-bits="32" aria-pressed="true">float32</button><button type="button" data-bits="16" aria-pressed="false">float16</button><button type="button" data-bits="8" aria-pressed="false">8-bit</button></div><div class="ctl"><ctl id="N4c" label="Gaussians" min="0.1" max="10" step="0.1" value="3" unit=" M"></ctl><ctl id="dg4c" label="color degree" min="0" max="3" step="1" value="3"></ctl><ctl id="lt4c" label="hash log₂T" min="14" max="24" step="1" value="19"></ctl><p class="read" id="r4c"></p></div>
+      <pred k="p4c"></pred>
+      <mbox k="m4c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>NeRF is small and slow; splats are big and fast.</p>
+  
+</section>
+<section class="step" data-i="14" hidden>
+  <p class="tag">Lecture 4.2 · slide 5 · Hash encoding (Instant-NGP)</p>
+  <h1>Multi-resolution hash encoding</h1>
+  <p class="like"><b>Like</b>A coat check with fewer hooks than coats: some coats share a hook, and it mostly works.</p>
+  <p class="lead">Features live on grids at several resolutions and are added up. Coarse levels get their own slot per vertex. Fine levels have more vertices than the table has slots, so a hash makes them share. Here the 'network' is just the sum, fit by least squares.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c4a" aria-label="Target profile and the hash-grid fit, with grid vertices per level"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="nL4a" label="levels" min="1" max="6" step="1" value="5"></ctl><ctl id="T4a" label="table size T" min="8" max="64" step="8" value="64"></ctl><p class="read" id="r4a"></p></div>
+      <pred k="p4a"></pred>
+      <mbox k="m4a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Many resolutions in a small table: fast lookups replace most of the big network.</p>
+  
+</section>
+<section class="step" data-i="15" hidden>
+  <p class="tag">Lecture 4.2 · slide 6 · Pruning and quantization</p>
+  <h1>Pruning and quantization</h1>
+  <p class="like"><b>Like</b>Rounding prices to the nearest dime, and dropping the pennies entirely.</p>
+  <p class="lead">Quantization stores each number with fewer bits. Pruning drops the smallest numbers. Both shrink the file. Find where the error curve turns up.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c4b" aria-label="Compressed fit against the target and error against bits per number"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="b4b" label="bits per number" min="1" max="16" step="1" value="8"></ctl><ctl id="p4b" label="prune smallest" min="0" max="90" step="5" value="0" unit=" %"></ctl><p class="read" id="r4b"></p></div>
+      <pred k="p4b"></pred>
+      <mbox k="m4b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>8 bits is nearly free; below about 4 bits quality falls off a cliff.</p>
+  
+</section>
+<section class="step" data-i="16" hidden>
+  <p class="tag">Lecture 4.2 · slide 6 · Knowledge distillation</p>
+  <h1>Knowledge distillation</h1>
+  <p class="like"><b>Like</b>A student who studies the teacher's worked answers learns more than one who sees only a few noisy answer keys.</p>
+  <p class="lead">The teacher is the big hash-grid model (192 numbers). The student is a small model (K bumps). Train the student on a few noisy real measurements, or on many answers queried from the teacher. Same student, very different result.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n17" aria-label="Target, the teacher, and two students trained on real data or on teacher answers"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="ns17" label="real samples" min="6" max="200" step="1" value="24"></ctl><ctl id="sd17" label="measurement noise" min="0" max="0.08" step="0.005" value="0.03"></ctl><ctl id="K17" label="student size K" min="6" max="40" step="1" value="24"></ctl><p class="read" id="r17"></p></div>
+      <pred k="q17"></pred>
+      <mbox k="m17" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>A small model learns best from a big model's dense, clean answers.</p>
+  
+</section>
+<section class="step" data-i="17" hidden>
+  <p class="tag">Lecture 4.2 · slide 7 · Efficient Gaussian splatting</p>
+  <h1>Splatting: stop when the pixel is full</h1>
+  <p class="like"><b>Like</b>Stacking tinted glass panes: after a few, no light gets through, so you stop stacking.</p>
+  <p class="lead">Splats are sorted front to back and blended with C = Σ Tᵢαᵢcᵢ. Once the light left over, T, drops below 1/255, nothing behind can change an 8-bit pixel. With opaque leaves that is after a handful of splats.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c5c" aria-label="Opacity of each splat along one pixel and the remaining transmittance on a log scale"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="n5c" label="splats on ray" min="10" max="200" step="5" value="100"></ctl><ctl id="a5c" label="mean opacity α" min="0.02" max="0.9" step="0.01" value="0.3"></ctl><label class="chk"><input type="checkbox" id="st5c" checked> stop when T &lt; 1/255</label><p class="read" id="r5c"></p></div>
+      <pred k="p5c"></pred>
+      <mbox k="m5c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>No network, and most splats are never touched: that is why splatting is real time.</p>
+  
+</section>
+<section class="step" data-i="18" hidden>
+  <p class="tag">Lecture 4.2 · slide 7 · Gaussian splatting: color cost</p>
+  <h1>View-dependent color costs numbers</h1>
+  <p class="like"><b>Like</b>Playing a sharp click on a bass-only speaker: it comes out as a soft thump.</p>
+  <p class="lead">A waxy leaf changes color with the view. Splats store that as harmonics in the view direction. A tight highlight needs high orders, and every order adds numbers to each Gaussian.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c5b" aria-label="Brightness against viewing angle for a waxy leaf and a harmonic fit"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="K5b" label="order K" min="0" max="8" step="1" value="2"></ctl><ctl id="s5b" label="shininess s" min="5" max="150" step="1" value="40"></ctl><p class="read" id="r5b"></p></div>
+      <pred k="p5b"></pred>
+      <mbox k="m5b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Low orders blur highlights; high orders cost memory. Degree 3 is 48 of a splat's 59 numbers.</p>
+  
+</section>
+<section class="step" data-i="19" hidden>
+  <p class="tag">Lecture 4.2 · slide 8 · MobileNeRF</p>
+  <h1>MobileNeRF: triangles, then a tiny network</h1>
+  <p class="like"><b>Like</b>Paint-by-number: draw the shapes fast, then a simple rule colors each cell.</p>
+  <p class="lead">(a) Triangles drawn by the phone's normal graphics pipeline. (b) A texture stores features instead of colors. (c) Rasterizing gives a feature image. (d) A tiny network turns each pixel's features plus view direction into color: one call per pixel. The weights here are made up; MobileNeRF trains them.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n20" aria-label="Four panels: mesh, feature texture, feature image and final color"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="v20" label="view direction" min="-80" max="80" step="1" value="20" unit="°"></ctl><ctl id="s20" label="NeRF samples per ray" min="16" max="192" step="16" value="64"></ctl><p class="read" id="r20"></p></div>
+      <pred k="q20"></pred>
+      <mbox k="m20" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Rasterize first, then one small network call per pixel instead of dozens per ray.</p>
+  
+</section>
+<section class="step" data-i="20" hidden>
+  <p class="tag">Lecture 4.2 · slides 9 and 11 · Edge deployment, trade-offs</p>
+  <h1>Size against quality: the frontier</h1>
+  <p class="like"><b>Like</b>Picking a phone photo setting: file size against picture quality. The good choices sit on the edge.</p>
+  <p class="lead">Every dot is one compression setting of the same hash-grid model (bits × pruning). The green dots form the frontier: no other setting is both smaller and better. Set the device budget and see the best quality you can afford.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n21" aria-label="Scatter of size against PSNR for compression settings, with the frontier and a budget line"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="bud21" label="size budget" min="30" max="270" step="2" value="100" unit=" B"></ctl><p class="read" id="r21"></p></div>
+      <pred k="q21"></pred>
+      <mbox k="m21" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Pick from the frontier; any setting below it wastes bytes or quality.</p>
+  
+</section>
+<section class="step" data-i="21" hidden>
+  <p class="tag">Lecture 4.2 · slide 10 · Benchmarks and metrics</p>
+  <h1>How do we score a render? PSNR and SSIM</h1>
+  <p class="like"><b>Like</b>Two photos with the same error score, one grainy and one blurry, look different to people.</p>
+  <p class="lead">PSNR measures average pixel error in decibels: higher is better. SSIM compares local structure: brightness, contrast and pattern. A uniform brightness shift gets a poor PSNR but almost perfect SSIM. Benchmarks report several metrics (PSNR, SSIM, LPIPS, fps, size) for this reason.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n22" aria-label="Reference leaf patch and corrupted version side by side"></canvas></div></div>
+    <div class="side">
+      <div class="btns" id="cmpBtns"><button type="button" data-cmp="noise" aria-pressed="true">Noise</button><button type="button" data-cmp="blur" aria-pressed="false">Blur</button><button type="button" data-cmp="shift" aria-pressed="false">Brighter</button></div><div class="ctl"><ctl id="amt22" label="amount" min="0" max="1" step="0.01" value="0.5"></ctl><p class="read" id="r22"></p></div>
+      <pred k="q22"></pred>
+      <mbox k="m22" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Report several metrics: PSNR counts pixel error, SSIM looks at structure.</p>
+  
+</section>
+<section class="step" data-i="22" hidden>
+  <p class="tag">Lecture 4.3 · slide 5 · AR object placement and occlusion</p>
+  <h1>AR occlusion: in front or behind?</h1>
+  <p class="like"><b>Like</b>An AR sticker that must hide behind the real leaf.</p>
+  <p class="lead">AR draws a virtual tag only where it is nearer than the real scene: a depth test against your reconstruction. Noise and blurred edges make the tag poke through leaves or vanish in front of them.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c6a" aria-label="Depth profile with a virtual tag and the composited result with wrong pixels marked"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="z6a" label="tag depth" min="1.8" max="3.8" step="0.05" value="2.3" unit=" m"></ctl><ctl id="sd6a" label="depth noise" min="0" max="0.3" step="0.01" value="0.05" unit=" m"></ctl><ctl id="bl6a" label="edge blur" min="0" max="12" step="1" value="0" unit=" px"></ctl><p class="read" id="r6a"></p></div>
+      <pred k="p6a"></pred>
+      <mbox k="m6a" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>AR needs good depth exactly where surfaces are close to the virtual object.</p>
+  
+</section>
+<section class="step" data-i="23" hidden>
+  <p class="tag">Lecture 4.3 · slide 6 · Gaming and dynamic scenes: latency</p>
+  <h1>Latency: the picture arrives late</h1>
+  <p class="like"><b>Like</b>A laggy video call: by the time the image arrives, you have already moved.</p>
+  <p class="lead">While a frame renders, the head or camera keeps turning. The image lands late by (turn speed × latency). VR is commonly targeted at about 20 ms motion-to-photon. Compare render methods using the frame times from the bottleneck concept.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n24" aria-label="Image lag in pixels against turn speed for each rendering method"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="w24" label="turn speed" min="10" max="300" step="5" value="100" unit=" °/s"></ctl><ctl id="o24" label="display + tracking" min="0" max="30" step="1" value="8" unit=" ms"></ctl><ctl id="t24" label="chip TFLOPS" min="0.5" max="80" step="0.5" value="10"></ctl><p class="read" id="r24"></p></div>
+      <pred k="q24"></pred>
+      <mbox k="m24" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Lag = turn speed × latency. Only real-time methods keep it under a few pixels.</p>
+  
+</section>
+<section class="step" data-i="24" hidden>
+  <p class="tag">Lecture 4.3 · slide 7 · Scientific and educational visualization</p>
+  <h1>Slice a neural field: a CT scan for plants</h1>
+  <p class="like"><b>Like</b>A CT scan: one slice at a time through the inside of the object.</p>
+  <p class="lead">A neural field can be asked for density anywhere, so you can slice it like a CT scan. Here is a maize stalk cross-section: dense rind, soft pith, vascular bundles. Move the slice and measure stalk width and rind thickness from where the density crosses a threshold.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n25" aria-label="Stalk cross-section density with a slice line and the density profile along it"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="y25" label="slice position" min="-9.5" max="9.5" step="0.25" value="0" unit=" mm"></ctl><ctl id="thr25" label="threshold" min="0.1" max="0.9" step="0.05" value="0.5"></ctl><p class="read" id="r25"></p></div>
+      <pred k="q25"></pred>
+      <mbox k="m25" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Query the field anywhere: slicing turns a 3D model into measurements.</p>
+  
+</section>
+<section class="step" data-i="25" hidden>
+  <p class="tag">Lecture 4.3 · slide 8 · Multimodal integration: LiDAR</p>
+  <h1>Images + LiDAR: trust each where it is good</h1>
+  <p class="like"><b>Like</b>Two witnesses: one has sharp eyes up close, the other is steady at every distance. You weigh each by how reliable they are.</p>
+  <p class="lead">Stereo depth error grows as Z²·Δd/(f·B). LiDAR error stays about constant. Fusing with inverse-variance weights gives an error smaller than either, and LiDAR also fixes the scale that photos alone cannot.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n26" aria-label="Depth error against distance for stereo, LiDAR and fused, on log axes"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="B26" label="stereo baseline" min="0.05" max="1" step="0.05" value="0.3" unit=" m"></ctl><ctl id="e26" label="match error" min="0.25" max="3" step="0.25" value="0.5" unit=" px"></ctl><ctl id="l26" label="LiDAR error" min="0.01" max="0.1" step="0.005" value="0.03" unit=" m"></ctl><ctl id="Z26" label="distance" min="1" max="40" step="0.5" value="5" unit=" m"></ctl><p class="read" id="r26"></p></div>
+      <pred k="q26"></pred>
+      <mbox k="m26" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Weight each sensor by 1/error²; the fused depth beats both.</p>
+  
+</section>
+<section class="step" data-i="26" hidden>
+  <p class="tag">Lecture 4.3 · slide 8 · Multimodal integration: hyperspectral NeRF</p>
+  <h1>Hyperspectral: NDVI from albedo, not raw pixels</h1>
+  <p class="like"><b>Like</b>Judging fruit ripeness under a yellow streetlight instead of daylight.</p>
+  <p class="lead">Healthy leaves reflect little red and a lot of near-infrared. NDVI = (NIR − R)/(NIR + R). The ratio cancels plain brightness, but not haze or shade light that is richer in NIR. Computing NDVI from albedo fixes both.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c6c" aria-label="NDVI along a row from raw values and from albedo, with shading below"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="S6c" label="shade light" min="0.1" max="1" step="0.05" value="0.3"></ctl><ctl id="o6c" label="haze offset" min="0" max="0.05" step="0.005" value="0.02"></ctl><ctl id="q6c" label="shade NIR/red" min="0.6" max="2" step="0.05" value="1"></ctl><p class="read" id="r6c"></p></div>
+      <pred k="p6c"></pred>
+      <mbox k="m6c" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Store reflectance per band; health indices then stop changing with shadows.</p>
+  
+</section>
+<section class="step" data-i="27" hidden>
+  <p class="tag">Lecture 4.3 · slide 9 · Dynamic NeRFs (Nerfies, scene flow)</p>
+  <h1>Dynamic scenes: wind</h1>
+  <p class="like"><b>Like</b>A long-exposure photo of a waving hand turns into a blur; a camera that tracks the hand keeps it sharp.</p>
+  <p class="lead">A leaf tip swings during capture. A static model must explain every frame with one shape, so it averages into a faint smear. A deformable model keeps one sharp canonical leaf plus a shift per frame.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="c6b" aria-label="Leaf density across frames, the static average and the aligned average"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="A6b" label="wind swing" min="0" max="0.15" step="0.01" value="0.1"></ctl><ctl id="N6b" label="frames" min="4" max="24" step="1" value="12"></ctl><ctl id="w6b" label="leaf width" min="0.01" max="0.05" step="0.005" value="0.02"></ctl><p class="read" id="r6b"></p></div>
+      <pred k="p6b"></pred>
+      <mbox k="m6b" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Separate what the leaf is from where it is now.</p>
+  
+</section>
+<section class="step" data-i="28" hidden>
+  <p class="tag">Lecture 4.3 · slide 9 · Generalization</p>
+  <h1>Generalization: a prior from many plants</h1>
+  <p class="like"><b>Like</b>A sketch artist who has drawn thousands of faces needs only a few clues to draw yours.</p>
+  <p class="lead">From scratch, a model needs many views of each new plant. A model trained on 300 plants learns their common shapes (principal components). A new plant then needs only a few measurements to pin down a few numbers.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n29" aria-label="True new plant, its few observed points, and fits from scratch and from the prior"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="nm29" label="measurements" min="3" max="64" step="1" value="8"></ctl><ctl id="k29" label="prior shapes k" min="0" max="12" step="1" value="6"></ctl><ctl id="sd29" label="noise" min="0" max="0.1" step="0.005" value="0.03"></ctl><div class="btns"><button type="button" id="new29">New plant</button></div><p class="read" id="r29"></p></div>
+      <pred k="q29"></pred>
+      <mbox k="m29" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>A learned prior trades many views per scene for a few numbers per scene.</p>
+  
+</section>
+<section class="step" data-i="29" hidden>
+  <p class="tag">Lecture 4.3 · slide 10 · Research frontiers: 4D and generative</p>
+  <h1>Frontiers: generate plants, model growth in 4D</h1>
+  <p class="like"><b>Like</b>A recipe instead of a photo album: store how to make it, not every picture of it.</p>
+  <p class="lead">Generative: draw random numbers for the prior's shapes and you get new, plausible plants nobody scanned. 4D: store one canonical plant plus a small change per time step instead of a full model per day.</p>
+  <div class="grid">
+    <div class="stages"><div class="stage"><canvas id="n30" aria-label="Five generated plants from the learned prior, and storage of per-frame against canonical-plus-change models"></canvas></div></div>
+    <div class="side">
+      <div class="ctl"><ctl id="k30" label="shapes used" min="1" max="12" step="1" value="6"></ctl><div class="btns"><button type="button" id="new30" class="pri">Generate 5 plants</button></div><ctl id="F30" label="time steps" min="2" max="120" step="1" value="30"></ctl><ctl id="ms30" label="model size" min="1" max="500" step="1" value="50" unit=" MB"></ctl><ctl id="d30" label="change per step" min="0.01" max="5" step="0.01" value="0.5" unit=" MB"></ctl><p class="read" id="r30"></p></div>
+      <pred k="q30"></pred>
+      <mbox k="m30" label="∑ The math"></mbox>
+    </div>
+  </div>
+  <p class="one"><b>In one line</b>Learned priors let models create and track change, not just copy one scene.</p>
+  
+</section>
+</div>
+
+<script>
+var M4=(function(){
+var PI=Math.PI,D2R=PI/180;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){var u=Math.max(r(),1e-9),v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*PI*v)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function solveLin(A,b){var n=b.length,i,j,k;for(i=0;i<n;i++){var p=i;for(j=i+1;j<n;j++)if(Math.abs(A[j][i])>Math.abs(A[p][i]))p=j;var t=A[i];A[i]=A[p];A[p]=t;var tb=b[i];b[i]=b[p];b[p]=tb;
+  for(j=i+1;j<n;j++){var f=A[j][i]/A[i][i];if(f===0)continue;for(k=i;k<n;k++)A[j][k]-=f*A[i][k];b[j]-=f*b[i]}}
+  var x=new Array(n);for(i=n-1;i>=0;i--){var s=b[i];for(j=i+1;j<n;j++)s-=A[i][j]*x[j];x[i]=s/A[i][i]}return x}
+/* symmetric positive definite solve (Cholesky) for the grid fit */
+function chol(A,b){var n=b.length,L=[],i,j,k;for(i=0;i<n;i++)L.push(new Float64Array(n));
+  for(i=0;i<n;i++){for(j=0;j<=i;j++){var s=A[i][j];for(k=0;k<j;k++)s-=L[i][k]*L[j][k];if(i===j)L[i][i]=Math.sqrt(Math.max(s,1e-12));else L[i][j]=s/L[j][j]}}
+  var y=new Float64Array(n);for(i=0;i<n;i++){var s2=b[i];for(k=0;k<i;k++)s2-=L[i][k]*y[k];y[i]=s2/L[i][i]}
+  var x=new Float64Array(n);for(i=n-1;i>=0;i--){var s3=y[i];for(k=i+1;k<n;k++)s3-=L[k][i]*x[k];x[i]=s3/L[i][i]}return x}
+
+/* ---- Day 1: Lambert, Phong, microfacet ---- */
+/* leaf tilt b (deg, + = toward the sun), sun elevation e (deg). n=(sin b, cos b), l=(cos e, sin e) -> n.l = sin(e+b) */
+function lambert(e,b,rho){var ndl=Math.max(0,Math.sin((e+b)*D2R));return {ndl:ndl,I:rho*ndl,L:rho*1000*ndl/PI}}
+/* flat leaf, sun at elevation e on the right; viewer at angle tv measured from +x through up (0..180). mirror dir angle = 180-e */
+function phong(tv,e,kd,ks,s){var ndl=Math.max(0,Math.sin(e*D2R)),rv=Math.max(0,Math.cos((tv-(180-e))*D2R));var sp=ks*Math.pow(rv,s);return {ndl:ndl,rv:rv,diff:kd*ndl,spec:sp,I:kd*ndl+sp}}
+function phongHalf(s){return Math.acos(Math.pow(0.5,1/s))/D2R}
+function ggxD(th,a){var a2=a*a,c=Math.cos(th*D2R),d=c*c*(a2-1)+1;return a2/(PI*d*d)}
+function ggxHalf(a){var p=ggxD(0,a),lo=0,hi=89.9;for(var k=0;k<60;k++){var m=(lo+hi)/2;if(ggxD(m,a)>p/2)lo=m;else hi=m}return (lo+hi)/2}
+function schlick(F0,th){return F0+(1-F0)*Math.pow(1-Math.cos(th*D2R),5)}
+
+/* ---- Day 2: intrinsic split, photometric stereo, visibility ---- */
+var NS=96;
+function stripAlb(){var a=[];for(var i=0;i<NS;i++){var v=0.30;if(i>=18&&i<40)v=0.12;else if(i>=40&&i<44)v=0.06;else if(i>=58&&i<80)v=0.12;a.push(v)}return a}
+function stripShade(edge){var s=[];for(var i=0;i<NS;i++){var t=1/(1+Math.exp(-(i-50)/edge)),u=1/(1+Math.exp(-(i-70)/edge));s.push(1-0.7*(t-u))}return s}
+function retinex(I,t){var n=I.length,lg=I.map(Math.log),la=[lg[0]],i;for(i=1;i<n;i++){var g=lg[i]-lg[i-1];la.push(la[i-1]+(Math.abs(g)>t?g:0))}
+  var ls=lg.map(function(v,k){return v-la[k]}),mx=-1e9;for(i=0;i<n;i++)mx=Math.max(mx,ls[i]);
+  var A=la.map(function(v){return Math.exp(v+mx)}),S=ls.map(function(v){return Math.exp(v-mx)});return {A:A,S:S}}
+function relErr(est,tru){var s=0;for(var i=0;i<est.length;i++)s+=Math.abs(est[i]-tru[i])/tru[i];return s/est.length}
+var PS_N=48;
+function psSurf(){var z=[],dz=[],rho=[];for(var i=0;i<PS_N;i++){var x=(i+0.5)/PS_N;z.push(0.12*Math.sin(PI*1.6*x)+0.05*Math.sin(PI*5*x));dz.push(0.12*PI*1.6*Math.cos(PI*1.6*x)+0.05*PI*5*Math.cos(PI*5*x));rho.push(x<0.5?0.45:0.35)}return {z:z,dz:dz,rho:rho}}
+function photoStereo(spread,sd,seed){var r=rng(seed),S=psSurf(),Ls=[-spread,0,spread].map(function(a){return [Math.sin(a*D2R),Math.cos(a*D2R)]}),out=[],ae=0,re=0,cnt=0;
+  for(var i=0;i<PS_N;i++){var nx=-S.dz[i],nz=1,nn=Math.sqrt(nx*nx+1);nx/=nn;nz/=nn;var rows=[],ys=[];
+    for(var j=0;j<3;j++){var I=S.rho[i]*(nx*Ls[j][0]+nz*Ls[j][1]);if(I<=0)continue;I+=sd*gauss(r);rows.push(Ls[j]);ys.push(I)}
+    var res={nx:nx,nz:nz,ok:false};
+    if(rows.length>=2){var a=0,b=0,c=0,p=0,q=0;rows.forEach(function(l,k){a+=l[0]*l[0];b+=l[0]*l[1];c+=l[1]*l[1];p+=l[0]*ys[k];q+=l[1]*ys[k]});var det=a*c-b*b;
+      if(Math.abs(det)>1e-9){var bx=(c*p-b*q)/det,bz=(a*q-b*p)/det,al=Math.sqrt(bx*bx+bz*bz);res={nx:nx,nz:nz,ok:true,ex:bx/al,ez:bz/al,alb:al};
+        var ang=Math.acos(clamp(res.ex*nx+res.ez*nz,-1,1))/D2R;ae+=ang;re+=Math.abs(al-S.rho[i])/S.rho[i];cnt++}}
+    out.push(res)}
+  var zr=[S.z[0]],dx=1/PS_N;for(i=1;i<PS_N;i++){var s0=out[i-1].ok?-out[i-1].ex/out[i-1].ez:0,s1=out[i].ok?-out[i].ex/out[i].ez:0;zr.push(zr[i-1]+dx*(clamp(s0,-5,5)+clamp(s1,-5,5))/2)}
+  var a2=0,b2=0,c2=0;Ls.forEach(function(l){a2+=l[0]*l[0];c2+=l[1]*l[1];b2+=l[0]*l[1]});
+  return {S:S,pts:out,zr:zr,angErr:cnt?ae/cnt:NaN,albErr:cnt?re/cnt:NaN,n:cnt,LtL:[a2,b2,c2],lights:Ls}}
+function canopy(nLeaves,seed){var r=rng(seed),L=[];for(var i=0;i<nLeaves;i++){var cx=r()*4,cy=0.4+r()*1.2,len=0.15+r()*0.2,t=(r()*2-1)*0.7;L.push([cx-len/2*Math.cos(t),cy-len/2*Math.sin(t),cx+len/2*Math.cos(t),cy+len/2*Math.sin(t)])}return L}
+function segHit(ox,oy,dx,dy,s){var ex=s[2]-s[0],ey=s[3]-s[1],den=dx*ey-dy*ex;if(Math.abs(den)<1e-12)return false;var wx=s[0]-ox,wy=s[1]-oy,t=(wx*ey-wy*ex)/den,u=(wx*dy-wy*dx)/den;return t>1e-6&&u>=0&&u<=1}
+function blocked(ox,oy,ang,leaves){var dx=Math.cos(ang),dy=Math.sin(ang);for(var k=0;k<leaves.length;k++)if(segHit(ox,oy,dx,dy,leaves[k]))return true;return false}
+function visAt(x,sunE,leaves,nd){nd=nd||90;var sun=!blocked(x,0,sunE*D2R,leaves),num=0,den=0;for(var k=0;k<nd;k++){var a=(k+0.5)/nd*PI,w=Math.sin(a);den+=w;if(!blocked(x,0,a,leaves))num+=w}return {sun:sun,svf:num/den}}
+
+/* ---- Day 3: relight a heightfield, light in few numbers, sun by hour ---- */
+var RN=200,RX=3;
+function hf(x){return 0.02+0.95*Math.exp(-Math.pow((x-0.6)/0.16,2))+1.1*Math.exp(-Math.pow((x-1.5)/0.18,2))+0.85*Math.exp(-Math.pow((x-2.4)/0.15,2))}
+function hfAlb(x){return hf(x)>0.25?0.15:0.30}
+function hfShade(th,sky,nd){nd=nd||60;var l=[Math.cos(th*D2R),Math.sin(th*D2R)],out=[];
+  function blk(x0,y0,a){var dx=Math.cos(a),dy=Math.sin(a);for(var t=0.02;t<4;t+=0.02){var x=x0+t*dx,y=y0+t*dy;if(x<0||x>RX)return false;if(hf(x)>y)return true;if(y>1.4)return false}return false}
+  for(var i=0;i<RN;i++){var x=(i+0.5)/RN*RX,h=hf(x),e=1e-3,dh=(hf(x+e)-hf(x-e))/(2*e),nn=Math.sqrt(dh*dh+1),n=[-dh/nn,1/nn],ndl=Math.max(0,n[0]*l[0]+n[1]*l[1]);
+    var v=ndl>0&&!blk(x,h+1e-3,th*D2R)?1:0,num=0,den=0;
+    for(var k=0;k<nd;k++){var a=(k+0.5)/nd*PI,c=Math.max(0,n[0]*Math.cos(a)+n[1]*Math.sin(a));den+=Math.sin(a);if(c>0&&!blk(x,h+1e-3,a))num+=c}
+    out.push({x:x,h:h,ndl:ndl,v:v,svf:num/den,sh:(1-sky)*v*ndl+sky*num/den})}
+  return out}
+function relight(th0,th,sky){var a=hfShade(th0,sky),b=hfShade(th,sky),cap=[],tru=[],e=0,s=0;
+  for(var i=0;i<RN;i++){var al=hfAlb(a[i].x);cap.push(al*a[i].sh);tru.push(al*b[i].sh);if(Math.abs(cap[i]-tru[i])>0.2*tru[i]+1e-4)e++;s+=Math.abs(cap[i]-tru[i])/Math.max(tru[i],1e-3)}
+  return {cap:cap,tru:tru,plain:cap,frac:e/RN,mre:s/RN,A:a,B:b}}
+var CH_M=720;
+function envL(ths,kap,sun){var L=[];for(var i=0;i<CH_M;i++){var t=2*PI*i/CH_M,sk=Math.sin(t)>0?0.25*Math.sin(t):0.03;L.push(sk+sun*Math.exp(kap*(Math.cos(t-ths*D2R)-1)))}return L}
+function fourier(L,K){var M=L.length,a=[],b=[],k,i;for(k=0;k<=K;k++){var sa=0,sb=0;for(i=0;i<M;i++){var t=2*PI*i/M;sa+=L[i]*Math.cos(k*t);sb+=L[i]*Math.sin(k*t)}a.push(sa*2/M);b.push(sb*2/M)}a[0]/=2;
+  var R=[];for(i=0;i<M;i++){var t2=2*PI*i/M,v=a[0];for(k=1;k<=K;k++)v+=a[k]*Math.cos(k*t2)+b[k]*Math.sin(k*t2);R.push(v)}return R}
+function irr(L){var M=L.length,E=[],j,i;for(j=0;j<M;j+=4){var ph=2*PI*j/M,s=0;for(i=0;i<M;i++){var c=Math.cos(2*PI*i/M-ph);if(c>0)s+=L[i]*c}E.push(s*2*PI/M)}return E}
+function rmsRel(a,b){var s=0,t=0;for(var i=0;i<a.length;i++){s+=(a[i]-b[i])*(a[i]-b[i]);t+=b[i]*b[i]}return Math.sqrt(s/t)}
+function clampCosCoef(k){var M=3600,s=0;for(var i=0;i<M;i++){var t=2*PI*i/M,c=Math.cos(t);if(c>0)s+=c*Math.cos(k*t)}return s*2/M*(k===0?0.5:1)}
+var LAT=42.03;
+function decl(n){return 23.44*Math.sin(2*PI*(284+n)/365)}
+function sunElev(hour,n){var d=decl(n)*D2R,p=LAT*D2R,H=15*(hour-12)*D2R;return Math.asin(Math.sin(p)*Math.sin(d)+Math.cos(p)*Math.cos(d)*Math.cos(H))/D2R}
+function sunlit(LAI,e){if(e<=0)return 0;return Math.exp(-0.5*LAI/Math.sin(e*D2R))}
+
+/* ---- Day 4: hash grid, quantize/prune, storage ---- */
+function target(x){return 0.5+0.28*Math.tanh((x-0.32)/0.012)+0.3*Math.exp(-Math.pow((x-0.7)/0.025,2))+0.08*Math.sin(2*PI*2*x)}
+var HG_N0=4,HG_S=256,HP=2654435761;
+function hgIdx(l,v,T){var Nl=HG_N0*Math.pow(2,l);if(Nl+1<=T)return v;return (v*HP)%T}
+function hgRows(nL,T){var rows=[];for(var i=0;i<HG_S;i++){var x=(i+0.5)/HG_S,r=[];for(var l=0;l<nL;l++){var Nl=HG_N0*Math.pow(2,l),p=x*Nl,v=Math.floor(p),f=p-v;r.push([l*T+hgIdx(l,v,T),1-f]);r.push([l*T+hgIdx(l,v+1,T),f])}rows.push(r)}return rows}
+function hgFit(nL,T){var P=nL*T,rows=hgRows(nL,T),A=[],b=new Float64Array(P),i,j;for(i=0;i<P;i++)A.push(new Float64Array(P));
+  rows.forEach(function(r,k){var y=target((k+0.5)/HG_S);for(i=0;i<r.length;i++){b[r[i][0]]+=r[i][1]*y;for(j=0;j<r.length;j++)A[r[i][0]][r[j][0]]+=r[i][1]*r[j][1]}});
+  for(i=0;i<P;i++)A[i][i]+=1e-5;var th=chol(A,b);
+  var used=0,coll=0;for(var l=0;l<nL;l++){var Nl=HG_N0*Math.pow(2,l),seen={};if(Nl+1<=T){used+=Nl+1;continue}for(var v=0;v<=Nl;v++){var h=hgIdx(l,v,T);if(seen[h])coll++;seen[h]=1}used+=Object.keys(seen).length}
+  return {th:th,rows:rows,used:used,coll:coll,P:P,nL:nL,T:T,mse:hgMse(th,rows)}}
+function hgPred(th,r){var s=0;for(var i=0;i<r.length;i++)s+=th[r[i][0]]*r[i][1];return s}
+function hgMse(th,rows){var e=0;for(var k=0;k<rows.length;k++){var d=hgPred(th,rows[k])-target((k+0.5)/HG_S);e+=d*d}return e/rows.length}
+function compress(th,bits,prune,usedMask){var idx=[],i;for(i=0;i<th.length;i++)if(!usedMask||usedMask[i])idx.push(i);
+  var mags=idx.map(function(k){return Math.abs(th[k])}).sort(function(a,b){return a-b}),cut=prune>0?mags[Math.min(mags.length-1,Math.floor(prune/100*mags.length))]:-1;
+  var keep=idx.filter(function(k){return Math.abs(th[k])>cut}),mn=1e9,mx=-1e9;keep.forEach(function(k){mn=Math.min(mn,th[k]);mx=Math.max(mx,th[k])});
+  var q=new Float64Array(th.length),lev=Math.pow(2,bits)-1;keep.forEach(function(k){q[k]=bits>=32||mx===mn?th[k]:mn+Math.round((th[k]-mn)/(mx-mn)*lev)/lev*(mx-mn)});
+  var bytes=keep.length*bits/8+(prune>0?idx.length/8:0)+8;return {q:q,kept:keep.length,total:idx.length,bytes:bytes}}
+function usedMask(nL,T){var m=new Uint8Array(nL*T);hgRows(nL,T).forEach(function(r){r.forEach(function(e){m[e[0]]=1})});return m}
+function gsBytes(N,deg,bits){var f=3+3+4+1+3*(deg+1)*(deg+1);return {floats:f,bytes:N*f*bits/8}}
+function ngpBytes(log2T,levels,F,bits){return Math.pow(2,log2T)*levels*F*bits/8+64*64*4}
+function nerfBytes(bits){var p=8*256*256+256*128+128*3+60*256;return p*bits/8}
+
+/* ---- Day 5: frame budget, view-dependent color, early stop ---- */
+function frameMs(W,Hh,spp,tflops,util){var px=W*Hh,eff=tflops*1e12*util;
+  var nerf=px*spp*1.05e6,ngp=px*spp*2.2e4,gs=px*30*60+1e6*300,mob=px*2.4e3+2e5*100;
+  return {nerf:nerf/eff*1e3,ngp:ngp/eff*1e3,gs:gs/eff*1e3,mob:mob/eff*1e3,px:px}}
+var VD_N=181;
+function vdTarget(tv,s){var p=phong(tv,40,0.10,0.5,s);return p.I}
+function vdFit(K,s){var X=[],Y=[],i,k,m=2*K+1;for(i=0;i<VD_N;i++){var t=i*PI/(VD_N-1),f=[1];for(k=1;k<=K;k++){f.push(Math.cos(k*t));f.push(Math.sin(k*t))}X.push(f);Y.push(vdTarget(i*180/(VD_N-1),s))}
+  var A=[],b=[];for(i=0;i<m;i++){A.push([]);var sb=0;for(var q=0;q<VD_N;q++)sb+=X[q][i]*Y[q];b.push(sb);for(k=0;k<m;k++){var t2=0;for(q=0;q<VD_N;q++)t2+=X[q][i]*X[q][k];A[i].push(t2+(i===k?1e-8:0))}}
+  var c=solveLin(A,b),pred=X.map(function(f){var v=0;for(var j=0;j<m;j++)v+=c[j]*f[j];return v}),e=0,pk=0;for(i=0;i<VD_N;i++){e+=(pred[i]-Y[i])*(pred[i]-Y[i]);pk=Math.max(pk,Y[i])}
+  var pkp=0;for(i=0;i<VD_N;i++)pkp=Math.max(pkp,pred[i]);return {pred:pred,Y:Y,rmse:Math.sqrt(e/VD_N),peak:pk,peakFit:pkp,m:m}}
+function splats(n,mean,seed){var r=rng(seed),a=[];for(var i=0;i<n;i++)a.push(clamp(mean*(0.5+r()),0.01,0.99));return a}
+function composite(al,stop){var T=1,cnt=0,Ts=[1];for(var i=0;i<al.length;i++){if(stop&&T<1/255)break;cnt++;T*=1-al[i];Ts.push(T)}return {cnt:cnt,T:T,Ts:Ts}}
+
+/* ---- Day 6: AR occlusion, wind, NDVI ---- */
+var AR_N=200;
+function arDepth(){var d=[];for(var i=0;i<AR_N;i++){var x=i/AR_N,v=4;if(x>=0.49&&x<=0.51)v=2.0;else if(x>=0.25&&x<0.49)v=2.0+(0.49-x)*2;else if(x>0.51&&x<=0.8)v=2.0+(x-0.51)*1.5;d.push(v)}return d}
+function blur(a,r){if(r<=0)return a.slice();var o=[];for(var i=0;i<a.length;i++){var s=0,c=0;for(var j=-r;j<=r;j++){var k=i+j;if(k<0||k>=a.length)continue;s+=a[k];c++}o.push(s/c)}return o}
+function arOcc(zv,sd,rad,seed){var r=rng(seed),D=arDepth(),est=blur(D,rad).map(function(v){return v+sd*gauss(r)}),wrong=0,tot=0,lab=[];
+  for(var i=40;i<160;i++){var t=zv<D[i],e=zv<est[i];tot++;if(t!==e)wrong++;lab.push({i:i,t:t,e:e})}return {D:D,est:est,wrong:wrong,tot:tot,lab:lab}}
+var WN=200;
+function bump(x,c,w){return Math.exp(-0.5*Math.pow((x-c)/w,2))}
+function wind(A,nF,w,seed){var r=rng(seed),frames=[],sh=[],i,j;for(j=0;j<nF;j++){var s=A*Math.sin(2*PI*j/nF+r()*0.6);sh.push(s);var f=[];for(i=0;i<WN;i++){var x=i/WN;f.push(bump(x,0.5+s,w)+0.02*gauss(r))}frames.push(f)}
+  var stat=new Array(WN).fill(0);frames.forEach(function(f){for(i=0;i<WN;i++)stat[i]+=f[i]/nF});
+  var ref=frames[0],est=[],al=new Array(WN).fill(0);frames.forEach(function(f){var best=0,bv=-1e9;for(var d=-60;d<=60;d++){var s2=0;for(i=0;i<WN;i++){var k=i+d;if(k<0||k>=WN)continue;s2+=f[k]*ref[i]}if(s2>bv){bv=s2;best=d}}est.push(best);for(i=0;i<WN;i++){var k2=i+best;al[i]+=(k2>=0&&k2<WN?f[k2]:0)/nF}});
+  var tru=[];for(i=0;i<WN;i++)tru.push(bump(i/WN,0.5+sh[0],w));
+  function width(a){var m=0,i2;for(i2=0;i2<WN;i2++)m=Math.max(m,a[i2]);var c=0;for(i2=0;i2<WN;i2++)if(a[i2]>m/2)c++;return {pk:m,fw:c/WN}}
+  return {frames:frames,stat:stat,al:al,tru:tru,sh:sh,est:est,ws:width(stat),wa:width(al),wt:width(tru)}}
+function ndvi(r,n){return (n-r)/(n+r)}
+function ndviStrip(S,off,ratio){var out=[],e=stripShade(4),i;for(i=0;i<NS;i++){var f=(1-e[i])/0.7,s=1-(1-S)*f,EN=1+(ratio-1)*f,rR=0.05,rN=0.45;
+  var dR=rR*s+off,dN=rN*s*EN+0.3*off;out.push({raw:ndvi(dR,dN),alb:ndvi((dR-off)/s,(dN-0.3*off)/(s*EN)),s:s,f:f,dR:dR,dN:dN})}return out}
+
+return {PI:PI,rng:rng,gauss:gauss,clamp:clamp,lambert:lambert,phong:phong,phongHalf:phongHalf,ggxD:ggxD,ggxHalf:ggxHalf,schlick:schlick,NS:NS,stripAlb:stripAlb,stripShade:stripShade,retinex:retinex,relErr:relErr,PS_N:PS_N,photoStereo:photoStereo,canopy:canopy,visAt:visAt,RN:RN,RX:RX,hf:hf,hfAlb:hfAlb,hfShade:hfShade,relight:relight,CH_M:CH_M,envL:envL,fourier:fourier,irr:irr,rmsRel:rmsRel,clampCosCoef:clampCosCoef,decl:decl,sunElev:sunElev,sunlit:sunlit,target:target,HG_N0:HG_N0,HG_S:HG_S,hgFit:hgFit,hgPred:hgPred,hgMse:hgMse,compress:compress,usedMask:usedMask,gsBytes:gsBytes,ngpBytes:ngpBytes,nerfBytes:nerfBytes,frameMs:frameMs,VD_N:VD_N,vdFit:vdFit,splats:splats,composite:composite,AR_N:AR_N,arOcc:arOcc,arDepth:arDepth,WN:WN,wind:wind,ndvi:ndvi,ndviStrip:ndviStrip};
+})();
+if(typeof module!=="undefined")module.exports=M4;
+
+var M4B=(function(M){
+var PI=Math.PI,D2R=PI/180,rng=M.rng,gauss=M.gauss,clamp=M.clamp;
+function solve(A,b){var n=b.length,i,j,k;A=A.map(function(r){return r.slice()});b=b.slice();for(i=0;i<n;i++){var p=i;for(j=i+1;j<n;j++)if(Math.abs(A[j][i])>Math.abs(A[p][i]))p=j;var t=A[i];A[i]=A[p];A[p]=t;var tb=b[i];b[i]=b[p];b[p]=tb;
+  for(j=i+1;j<n;j++){var f=A[j][i]/A[i][i];for(k=i;k<n;k++)A[j][k]-=f*A[i][k];b[j]-=f*b[i]}}var x=new Array(n);for(i=n-1;i>=0;i--){var s=b[i];for(j=i+1;j<n;j++)s-=A[i][j]*x[j];x[i]=s/A[i][i]}return x}
+function lsq(X,y,lam){var m=X[0].length,A=[],b=[],i,j,k;for(i=0;i<m;i++){A.push(new Array(m).fill(0));b.push(0)}
+  for(k=0;k<X.length;k++)for(i=0;i<m;i++){b[i]+=X[k][i]*y[k];for(j=0;j<m;j++)A[i][j]+=X[k][i]*X[k][j]}for(i=0;i<m;i++)A[i][i]+=lam;return solve(A,b)}
+function dotv(a,b){var s=0;for(var i=0;i<a.length;i++)s+=a[i]*b[i];return s}
+
+/* 1 · OpenGL material table (Learn OpenGL "Materials", from devernay.free.fr) */
+var MATS={
+ emerald:{a:[0.0215,0.1745,0.0215],d:[0.07568,0.61424,0.07568],s:[0.633,0.727811,0.633],n:0.6},
+ pearl:{a:[0.25,0.20725,0.20725],d:[1,0.829,0.829],s:[0.296648,0.296648,0.296648],n:0.088},
+ bronze:{a:[0.2125,0.1275,0.054],d:[0.714,0.4284,0.18144],s:[0.393548,0.271906,0.166721],n:0.2},
+ gold:{a:[0.24725,0.1995,0.0745],d:[0.75164,0.60648,0.22648],s:[0.628281,0.555802,0.366065],n:0.4},
+ "cyan plastic":{a:[0,0.1,0.06],d:[0,0.50980392,0.50980392],s:[0.50196078,0.50196078,0.50196078],n:0.25},
+ "red plastic":{a:[0,0,0],d:[0.5,0,0],s:[0.7,0.6,0.6],n:0.25},
+ "green rubber":{a:[0,0.05,0],d:[0.4,0.5,0.4],s:[0.04,0.7,0.04],n:0.078125},
+ "yellow rubber":{a:[0.05,0.05,0],d:[0.5,0.5,0.4],s:[0.7,0.7,0.04],n:0.078125}};
+function shadeSphere(mat,lAz,lEl,N){var m=MATS[mat],sh=m.n*128,L=[Math.cos(lEl*D2R)*Math.sin(lAz*D2R),Math.sin(lEl*D2R),Math.cos(lEl*D2R)*Math.cos(lAz*D2R)],V=[0,0,1],img=[],peak={d:0,s:0};
+  for(var j=0;j<N;j++)for(var i=0;i<N;i++){var x=(i+0.5)/N*2-1,y=1-(j+0.5)/N*2,r2=x*x+y*y;if(r2>1){img.push(null);continue}
+    var n=[x,y,Math.sqrt(1-r2)],ndl=Math.max(0,dotv(n,L)),R=[2*ndl*n[0]-L[0],2*ndl*n[1]-L[1],2*ndl*n[2]-L[2]],rv=ndl>0?Math.max(0,dotv(R,V)):0,sp=Math.pow(rv,sh),c=[];
+    for(var k=0;k<3;k++)c.push(clamp(m.a[k]+m.d[k]*ndl+m.s[k]*sp,0,1));img.push(c);var dd=(m.d[0]+m.d[1]+m.d[2])/3*ndl,ss=(m.s[0]+m.s[1]+m.s[2])/3*sp;if(dd+ss>peak.d+peak.s)peak={d:dd,s:ss}}
+  return {img:img,shin:sh,peak:peak}}
+
+/* 5 · learn a BRDF lobe from a few views */
+var LOBES=[2,8,32,128];
+function brdfBasis(tv){var r=Math.max(0,Math.cos((tv-140)*D2R)),f=[1];LOBES.forEach(function(s){f.push(Math.pow(r,s))});return f}
+function learnBRDF(nv,s,sd,seed){var r=rng(seed),X=[],y=[],obs=[],i;for(i=0;i<nv;i++){var tv=5+r()*170,v=M.phong(tv,40,0.10,0.5,s).I+sd*gauss(r);obs.push([tv,v]);X.push(brdfBasis(tv));y.push(v)}
+  var c=lsq(X,y,1e-3),pred=[],tru=[],e=0,pk=0,pkp=0;for(i=0;i<=180;i++){var p=dotv(c,brdfBasis(i)),t=M.phong(i,40,0.10,0.5,s).I;pred.push(p);tru.push(t);e+=(p-t)*(p-t);pk=Math.max(pk,t);pkp=Math.max(pkp,p)}
+  var near=obs.filter(function(o){return Math.abs(o[0]-140)<M.phongHalf(s)}).length;return {obs:obs,pred:pred,tru:tru,rmse:Math.sqrt(e/181),pk:pk,pkp:pkp,near:near}}
+
+/* 17 · distillation */
+var DS=256;function rbf(x,K){var f=[],w=1/K;for(var k=0;k<K;k++){var c=(k+0.5)/K;f.push(Math.exp(-0.5*Math.pow((x-c)/w,2)))}f.push(1);return f}
+var TEACH=null;function teacher(){if(!TEACH){var f=M.hgFit(6,64);TEACH={f:f,pred:f.rows.map(function(r){return M.hgPred(f.th,r)})}}return TEACH}
+function distill(n,sd,K,seed){var r=rng(seed),Xa=[],ya=[],pts=[],i;for(i=0;i<n;i++){var x=r(),y=M.target(x)+sd*gauss(r);pts.push([x,y]);Xa.push(rbf(x,K));ya.push(y)}
+  var T=teacher(),Xb=[],yb=[];for(i=0;i<DS;i++){Xb.push(rbf((i+0.5)/DS,K));yb.push(T.pred[i])}
+  var ca=lsq(Xa,ya,1e-4),cb=lsq(Xb,yb,1e-4),pa=[],pb=[],ea=0,eb=0,et=0;for(i=0;i<DS;i++){var xx=(i+0.5)/DS,t=M.target(xx),a=dotv(ca,rbf(xx,K)),b=dotv(cb,rbf(xx,K));pa.push(a);pb.push(b);ea+=(a-t)*(a-t);eb+=(b-t)*(b-t);et+=(T.pred[i]-t)*(T.pred[i]-t)}
+  return {pts:pts,pa:pa,pb:pb,ea:ea/DS,eb:eb/DS,et:et/DS,tN:T.f.used,sN:K+1}}
+
+/* 20 · MobileNeRF style: raster, feature texture, tiny per-pixel net */
+var MW=96,MH=60;
+function mobPoly(){var P=[[[40,58],[56,58],[59,44],[37,44]]];
+  var leaves=[[48,44,30,20],[48,44,66,18],[48,40,26,32],[48,40,72,30],[48,38,46,6]];leaves.forEach(function(l){var dx=l[2]-l[0],dy=l[3]-l[1],L=Math.sqrt(dx*dx+dy*dy),nx=-dy/L*4.5,ny=dx/L*4.5;P.push([[l[0],l[1]],[l[0]+dx*0.5+nx,l[1]+dy*0.5+ny],[l[2],l[3]],[l[0]+dx*0.5-nx,l[1]+dy*0.5-ny]])});return P}
+function inPoly(x,y,p){var c=false;for(var i=0,j=p.length-1;i<p.length;j=i++){var a=p[i],b=p[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+var NET=null;function net(){if(!NET){var r=rng(17),W1=[],b1=[],W2=[];for(var i=0;i<8;i++){var row=[];for(var j=0;j<5;j++)row.push(gauss(r)*0.8);W1.push(row);b1.push(gauss(r)*0.2)}for(i=0;i<3;i++){var r2=[];for(j=0;j<8;j++)r2.push(gauss(r)*0.25);W2.push(r2)}NET={W1:W1,b1:b1,W2:W2}}return NET}
+function tiny(f,vd){var N=net(),x=f.concat([Math.cos(vd*D2R)]),h=[],o=[],i,j;for(i=0;i<8;i++){var s=N.b1[i];for(j=0;j<5;j++)s+=N.W1[i][j]*x[j];h.push(Math.max(0,s))}for(i=0;i<3;i++){var t=0;for(j=0;j<8;j++)t+=N.W2[i][j]*h[j];o.push(t)}return o}
+function mobRender(vd){var P=mobPoly(),feat=[],col=[],cov=0;for(var y=0;y<MH;y++)for(var x=0;x<MW;x++){var id=-1;for(var k=P.length-1;k>=0;k--)if(inPoly(x+0.5,y+0.5,P[k])){id=k;break}
+  if(id<0){feat.push(null);col.push(null);continue}cov++;var u=x/MW,v=y/MH,base=id===0?[0.55,0.32,0.2]:[0.22,0.55+0.2*Math.sin(9*u+3*v),0.18],f=[base[0],base[1],base[2],0.5+0.5*Math.sin(20*u+13*v)];feat.push(f);
+  var d=tiny(f,vd);col.push([clamp(base[0]+d[0]*0.15,0,1),clamp(base[1]+d[1]*0.15,0,1),clamp(base[2]+d[2]*0.15,0,1)])}
+  return {P:P,feat:feat,col:col,cov:cov}}
+
+/* 21 · size–quality frontier */
+var FR=null;function frontier(){if(!FR){var f=M.hgFit(5,64),m=M.usedMask(5,64),pts=[];for(var b=2;b<=16;b++)for(var p=0;p<=80;p+=10){var c=M.compress(f.th,b,p,m),e=M.hgMse(c.q,f.rows);pts.push({b:b,p:p,bytes:c.bytes,psnr:10*Math.log10(1/e)})}
+  pts.forEach(function(a){a.bytes=Math.round(a.bytes)});pts.forEach(function(a){a.front=!pts.some(function(o){return o.bytes<=a.bytes&&o.psnr>=a.psnr&&(o.bytes<a.bytes||o.psnr>a.psnr)})});FR=pts}return FR}
+
+/* 22 · PSNR vs SSIM */
+var IS=64;function refImg(){var im=[];for(var y=0;y<IS;y++)for(var x=0;x<IS;x++){var u=x/IS,v=y/IS,vein=Math.exp(-Math.pow((u-0.5)*14,2))+0.6*Math.exp(-Math.pow(((u-0.5)*1.0-(v-0.5)*0.7+Math.round((v-0.15)*5)/5*0.1)*0,2))*0,
+  side=0;for(var k=0;k<5;k++){var yy=0.15+k*0.17,d=Math.abs(v-(yy+Math.abs(u-0.5)*0.6));side=Math.max(side,Math.exp(-d*d*900))}im.push(clamp(0.35+0.4*vein+0.3*side+0.05*Math.sin(37*u+21*v),0,1))}return im}
+function corrupt(im,mode,amt,seed){var r=rng(seed),o=[],x,y;if(mode==="noise"){for(var i=0;i<im.length;i++)o.push(clamp(im[i]+amt*gauss(r),0,1));return o}
+  if(mode==="shift"){return im.map(function(v){return clamp(v+amt,0,1)})}
+  var R=Math.round(amt);for(y=0;y<IS;y++)for(x=0;x<IS;x++){var s=0,c=0;for(var dy=-R;dy<=R;dy++)for(var dx=-R;dx<=R;dx++){var xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=IS||yy>=IS)continue;s+=im[yy*IS+xx];c++}o.push(s/c)}return o}
+function psnr(a,b){var e=0;for(var i=0;i<a.length;i++)e+=(a[i]-b[i])*(a[i]-b[i]);e/=a.length;return {mse:e,db:e>0?10*Math.log10(1/e):99}}
+function ssim(a,b){var C1=1e-4,C2=9e-4,w=8,tot=0,n=0;for(var by=0;by+w<=IS;by+=4)for(var bx=0;bx+w<=IS;bx+=4){var ma=0,mb=0,k=0,x,y;for(y=by;y<by+w;y++)for(x=bx;x<bx+w;x++){ma+=a[y*IS+x];mb+=b[y*IS+x];k++}ma/=k;mb/=k;var va=0,vb=0,cv=0;
+  for(y=by;y<by+w;y++)for(x=bx;x<bx+w;x++){var da=a[y*IS+x]-ma,db=b[y*IS+x]-mb;va+=da*da;vb+=db*db;cv+=da*db}va/=k-1;vb/=k-1;cv/=k-1;tot+=((2*ma*mb+C1)*(2*cv+C2))/((ma*ma+mb*mb+C1)*(va+vb+C2));n++}return tot/n}
+
+/* 24 · latency */
+function lagPx(omega,latMs,W,fov){var deg=omega*latMs/1000;return {deg:deg,px:deg*W/fov}}
+
+/* 25 · stalk cross-section slice */
+var SA=12,SB=10,RIND=1.2;
+function bundles(){var r=rng(9),B=[];while(B.length<60){var x=(r()*2-1)*SA,y=(r()*2-1)*SB,q=x*x/(SA*SA)+y*y/(SB*SB);if(q<0.85){var w=q>0.6?0.7:0.35;if(r()<w+0.2)B.push([x,y,0.35+0.25*r()])}}return B}
+var BUN=bundles();
+function stalkD(x,y){var q=Math.sqrt(x*x/(SA*SA)+y*y/(SB*SB)),d=0;if(q<=1){var dEdge=(1-q)*Math.min(SA,SB);d=dEdge<RIND?0.95:0.18;for(var i=0;i<BUN.length;i++){var b=BUN[i],dd=(x-b[0])*(x-b[0])+(y-b[1])*(y-b[1]);if(dd<b[2]*b[2])d=Math.max(d,0.7)}}return d}
+function sliceProf(yc,n){var p=[];for(var i=0;i<n;i++){var x=-15+30*(i+0.5)/n;p.push([x,stalkD(x,yc)])}return p}
+function sliceMeasure(yc,thr){var p=sliceProf(yc,1200),xs=[];for(var i=1;i<p.length;i++){if((p[i-1][1]>=thr)!==(p[i][1]>=thr))xs.push((p[i-1][0]+p[i][0])/2)}var w=xs.length>=2?xs[xs.length-1]-xs[0]:0;var rind=0;if(xs.length>=2)rind=xs[1]-xs[0];
+  var tw=Math.abs(yc)<SB?2*SA*Math.sqrt(1-yc*yc/(SB*SB)):0;return {width:w,rind:rind,cross:xs.length,trueW:tw}}
+
+/* 26 · LiDAR + stereo fusion */
+function fuse(Z,f,B,dd,sl){var ss=Z*Z*dd/(f*B),sf=1/Math.sqrt(1/(ss*ss)+1/(sl*sl)),wl=(1/(sl*sl))/(1/(ss*ss)+1/(sl*sl));return {ss:ss,sl:sl,sf:sf,wl:wl}}
+
+/* 29–30 · learned prior over plants: PCA */
+var PG=64;
+function plantProf(r){var p=new Array(PG).fill(0),h=0.6+0.4*r(),sp=0.85+0.3*r(),i,k,pos=[-0.3,-0.15,0.15,0.3];for(i=0;i<PG;i++){var x=(i+0.5)/PG;p[i]=h*Math.exp(-Math.pow((x-0.5)/0.04,2))}
+  for(k=0;k<4;k++){var c=0.5+pos[k]*sp,a=(0.2+0.5*r())*h,w=0.05+0.03*r();for(i=0;i<PG;i++){var xx=(i+0.5)/PG;p[i]+=a*Math.exp(-Math.pow((xx-c)/w,2))}}return p}
+var PR=null;
+function prior(){if(PR)return PR;var r=rng(31),D=[],i,j,k;for(k=0;k<300;k++)D.push(plantProf(r));var mu=new Array(PG).fill(0);D.forEach(function(p){for(i=0;i<PG;i++)mu[i]+=p[i]/D.length});
+  var C=[];for(i=0;i<PG;i++){C.push(new Array(PG).fill(0))}D.forEach(function(p){for(i=0;i<PG;i++)for(j=0;j<PG;j++)C[i][j]+=(p[i]-mu[i])*(p[j]-mu[j])/(D.length-1)});
+  var E=[],L=[],tot=0;for(i=0;i<PG;i++)tot+=C[i][i];
+  for(k=0;k<12;k++){var v=new Array(PG).fill(0).map(function(_,q){return Math.sin(q*(k+1)+1)});for(var it=0;it<300;it++){var w=new Array(PG).fill(0);for(i=0;i<PG;i++)for(j=0;j<PG;j++)w[i]+=C[i][j]*v[j];var nn=Math.sqrt(dotv(w,w));v=w.map(function(a){return a/nn})}
+    var Cv=new Array(PG).fill(0);for(i=0;i<PG;i++)for(j=0;j<PG;j++)Cv[i]+=C[i][j]*v[j];var lam=dotv(v,Cv);E.push(v);L.push(lam);for(i=0;i<PG;i++)for(j=0;j<PG;j++)C[i][j]-=lam*v[i]*v[j]}
+  PR={mu:mu,E:E,L:L,tot:tot};return PR}
+function fitNew(n,k,sd,seed){var P=prior(),r=rng(seed),tru=plantProf(rng(seed+1000)),idx=[],i;var pool=[];for(i=0;i<PG;i++)pool.push(i);for(i=0;i<n;i++){var j=i+Math.floor(r()*(PG-i));var t=pool[i];pool[i]=pool[j];pool[j]=t;idx.push(pool[i])}
+  var obs=idx.map(function(q){return [q,tru[q]+sd*gauss(r)]});
+  var Xs=obs.map(function(o){return rbf((o[0]+0.5)/PG,16)}),cs=lsq(Xs,obs.map(function(o){return o[1]}),1e-2),scratch=[];for(i=0;i<PG;i++)scratch.push(dotv(cs,rbf((i+0.5)/PG,16)));
+  var Xp=obs.map(function(o){var f=[];for(var q=0;q<k;q++)f.push(P.E[q][o[0]]);return f}),yp=obs.map(function(o){return o[1]-P.mu[o[0]]}),cp=k?lsq(Xp,yp,1e-3):[],pri=[];
+  for(i=0;i<PG;i++){var v=P.mu[i];for(var q=0;q<k;q++)v+=cp[q]*P.E[q][i];pri.push(v)}
+  function err(a){var s=0;for(var q=0;q<PG;q++)s+=(a[q]-tru[q])*(a[q]-tru[q]);return Math.sqrt(s/PG)}
+  var expl=0;for(i=0;i<k;i++)expl+=P.L[i];return {tru:tru,obs:obs,scratch:scratch,pri:pri,es:err(scratch),ep:err(pri),expl:expl/P.tot}}
+function sample(k,seed){var P=prior(),r=rng(seed),out=[];for(var s=0;s<5;s++){var p=P.mu.slice();for(var q=0;q<k;q++){var z=gauss(r)*Math.sqrt(Math.max(P.L[q],0));for(var i=0;i<PG;i++)p[i]+=z*P.E[q][i]}out.push(p)}return out}
+
+return {MATS:MATS,shadeSphere:shadeSphere,LOBES:LOBES,learnBRDF:learnBRDF,distill:distill,MW:MW,MH:MH,mobRender:mobRender,frontier:frontier,IS:IS,refImg:refImg,corrupt:corrupt,psnr:psnr,ssim:ssim,lagPx:lagPx,SA:SA,SB:SB,RIND:RIND,stalkD:stalkD,sliceProf:sliceProf,sliceMeasure:sliceMeasure,fuse:fuse,PG:PG,prior:prior,fitNew:fitNew,sample:sample,plantProf:plantProf};
+})(typeof M4!=="undefined"?M4:require("./m4.js"));
+if(typeof module!=="undefined")module.exports=M4B;
+
+var PRED2={
+ q01:["Which of the eight materials has the tightest highlight, and which the widest?","<span class='hl'>Emerald is tightest (shininess 0.6 × 128 = 76.8). The two rubbers are widest (0.078 × 128 = 10).</span> Same sphere, same light: the look comes from four numbers per material."],
+ q05:["Shininess 40. With 4 camera views, does the learned model get the highlight peak right? What about 16 views?","<span class='hl'>Averaged over 20 random camera setups: 4 views give a peak of about 0.42 against the true 0.56 and an error of 0.068. 16 views give about 0.59 and an error of 0.011, six times smaller.</span> Few views rarely land inside an 11°-wide highlight."],
+ q11:["Turn leaf yellowing up to 1. Do the shadows move?","<span class='hl'>No.</span> Only the albedo map changed. Shading, normals and visibility are untouched, so every shadow stays where it was and only the leaf color changes. Gloss adds a highlight that does depend on the sun angle."],
+ q17:["24 noisy samples (noise 0.03), student size 24. Which student is closer to the truth: the one trained on the samples or the one trained on teacher answers?","<span class='hl'>The teacher-trained student, by far: error about 4×10⁻⁴ against 0.78.</span> 25 numbers fit to 24 noisy points chase the noise. Even with 200 samples, the real-data student (6×10⁻⁴) is still worse."],
+ q20:["The image is 96 × 60 = 5,760 pixels and the plant covers 816 of them. How many network calls does MobileNeRF make per frame, and how many does a 64-sample NeRF make?","<span class='hl'>816 against 368,640: about 450 times fewer.</span> MobileNeRF calls its tiny network once per covered pixel. A NeRF calls a big one 64 times on every pixel's ray."],
+ q21:["Budget 100 bytes. Which setting gives the best quality? Then raise the budget to 140.","<span class='hl'>At 100 B: 5 bits with 10% pruned, 96 B, 39.6 dB. At 140 B: 8 bits, no pruning, 136 B, 52.4 dB.</span> Past about 8 bits, extra bytes buy almost nothing."],
+ q22:["Amount 0.5. 'Brighter' adds 0.1 to every pixel; 'Noise' adds random noise with σ = 0.05. Which has the better PSNR? Which looks closer to the original?","<span class='hl'>Noise has the better PSNR (25.9 dB against 20.1 dB), but Brighter looks closer: SSIM 0.98 against 0.86.</span> PSNR punishes any pixel change equally; SSIM checks whether the pattern survived."],
+ q24:["Turn speed 100 °/s, display and tracking 8 ms, a 10 TFLOPS laptop. How far behind is a splat image, and an Instant-NGP image?","<span class='hl'>Splats: about 20 px behind (1.3 ms render + 8 ms). Instant-NGP: about 2,100 px, almost a full screen width.</span> Lag = speed × latency × pixels per degree (1920 px / 90°)."],
+ q25:["Slice through the center, then at 8 mm. Does the rind look thicker or thinner off center?","<span class='hl'>Thicker: about 1.45 mm at the center and about 3.25 mm at 8 mm.</span> An off-center slice cuts the rind ring at a slant. To measure a tissue, slice it straight across, which needs a model you can query at any plane."],
+ q26:["At 5 m: stereo error 3.5 cm, LiDAR 3 cm. What is the fused error? Then move to 20 m.","<span class='hl'>About 2.3 cm at 5 m, better than either. At 20 m stereo is 56 cm off, so the fusion gives LiDAR almost all the weight (100%) and stays near 3 cm.</span>"],
+ q29:["8 measurements, 6 prior shapes. Which fit is closer to the new plant, and by how much? How many measurements does the from-scratch fit need to catch up?","<span class='hl'>Averaged over 20 new plants: the prior fit is about 2.5 times closer (error 0.084 against 0.214). From scratch needs about 48 measurements to match what the prior does with 12.</span>"],
+ q30:["30 time steps of a 50 MB model. How much storage for one model per step, and for one canonical model plus 0.5 MB of change per step?","<span class='hl'>1,500 MB against 65 MB, about 23 times less.</span> That is the idea behind 4D and deformable NeRFs: most of the plant does not change between steps."]
+};
+var CONCEPTS=[{"lec": "4.1", "cv": "n01"}, {"lec": "4.1", "cv": "c1a"}, {"lec": "4.1", "cv": "c1b"}, {"lec": "4.1", "cv": "c1c"}, {"lec": "4.1", "cv": "n05"}, {"lec": "4.1", "cv": "c2a"}, {"lec": "4.1", "cv": "c2b"}, {"lec": "4.1", "cv": "c2c"}, {"lec": "4.1", "cv": "c3b"}, {"lec": "4.1", "cv": "c3a"}, {"lec": "4.1", "cv": "n11"}, {"lec": "4.1", "cv": "c3c"}, {"lec": "4.2", "cv": "c5a"}, {"lec": "4.2", "cv": "c4c"}, {"lec": "4.2", "cv": "c4a"}, {"lec": "4.2", "cv": "c4b"}, {"lec": "4.2", "cv": "n17"}, {"lec": "4.2", "cv": "c5c"}, {"lec": "4.2", "cv": "c5b"}, {"lec": "4.2", "cv": "n20"}, {"lec": "4.2", "cv": "n21"}, {"lec": "4.2", "cv": "n22"}, {"lec": "4.3", "cv": "c6a"}, {"lec": "4.3", "cv": "n24"}, {"lec": "4.3", "cv": "n25"}, {"lec": "4.3", "cv": "n26"}, {"lec": "4.3", "cv": "c6c"}, {"lec": "4.3", "cv": "c6b"}, {"lec": "4.3", "cv": "n29"}, {"lec": "4.3", "cv": "n30"}];
+(function(){
+"use strict";
+var W=640,H=360,PI=Math.PI,D2R=PI/180;
+var $=function(s){return document.querySelector(s)};
+var css=function(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()};
+function txt(x,s,px,py,col,size,al){x.fillStyle=col;x.font=(size||12)+"px "+css("--mono");x.textAlign=al||"left";x.fillText(s,px,py)}
+function ln(x,a,b,c,d,col,w,dash){x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.strokeStyle=col;x.lineWidth=w||1;x.setLineDash(dash||[]);x.stroke();x.setLineDash([])}
+function dot(x,px,py,r,col){x.beginPath();x.arc(px,py,r,0,7);x.fillStyle=col;x.fill()}
+function ring(x,px,py,r,col,w){x.beginPath();x.arc(px,py,r,0,7);x.strokeStyle=col;x.lineWidth=w||1.5;x.stroke()}
+function arrow(x,a,b,c,d,col,w){ln(x,a,b,c,d,col,w);var ang=Math.atan2(d-b,c-a),s=8;x.beginPath();x.moveTo(c,d);x.lineTo(c-s*Math.cos(ang-0.4),d-s*Math.sin(ang-0.4));x.lineTo(c-s*Math.cos(ang+0.4),d-s*Math.sin(ang+0.4));x.closePath();x.fillStyle=col;x.fill()}
+function bg(x){x.fillStyle=css("--canvas");x.fillRect(0,0,W,H)}
+function f0(v){return v.toFixed(0)} function f1(v){return v.toFixed(1)} function f2(v){return v.toFixed(2)} function f3(v){return v.toFixed(3)} function ex(v){return v.toExponential(1).replace("e-","×10⁻").replace("e+","×10^")}
+function mk(id){var c=document.getElementById(id);c.width=W*2;c.height=H*2;var x=c.getContext("2d");x.scale(2,2);return x}
+function V(id){return +document.getElementById(id).value}
+function axes(x,L,R,T,B,xl,yl){ln(x,L,B,R,B,css("--dim"),1);ln(x,L,T,L,B,css("--dim"),1);if(xl)txt(x,xl,R,B+26,css("--dim"),10,"right");if(yl)txt(x,yl,L,T-8,css("--dim"),10,"left")}
+function curve(x,n,fx,fy,col,w,dash){x.beginPath();for(var i=0;i<n;i++){var px=fx(i),py=fy(i);if(i===0)x.moveTo(px,py);else x.lineTo(px,py)}x.strokeStyle=col;x.lineWidth=w||2;x.setLineDash(dash||[]);x.stroke();x.setLineDash([])}
+function mb(v){return v>=1e3?f1(v/1e3)+" GB":v>=10?f0(v)+" MB":v>=1?f1(v)+" MB":f2(v)+" MB"}
+function msf(v){return v>=6e4?f1(v/6e4)+" min":v>=1e3?f1(v/1e3)+" s":v>=10?f0(v)+" ms":f1(v)+" ms"}
+
+/* ---------- placeholders -> controls ---------- */
+var PRED={
+ p1a:["Sun at 30°, flat leaf. Now tilt the leaf 30° toward the sun. How much brighter does it get?","<span class='hl'>About 1.73 times.</span> n·l = sin(e + β): sin 30° = 0.50 flat, sin 60° = 0.87 tilted. This is why erect and drooping leaves of the same plant can differ by 2× in brightness at the same moment."],
+ p1b:["Set s = 10, then s = 100. How wide is the highlight, measured as the angle where it drops to half?","<span class='hl'>About 21° at s = 10, about 6.7° at s = 100.</span> Half-width = acos(0.5^(1/s)). A tight highlight means the leaf's look changes a lot between neighboring camera views, which is hard for SfM matching (SfM matching) and needs view-dependent color (Lecture 4.2)."],
+ p1c:["F₀ = 0.04 is about right for water and leaf wax. What fraction of light reflects at 0° incidence, and at 85°?","<span class='hl'>4% head-on, about 65% at 85°.</span> Schlick: F = F₀ + (1 − F₀)(1 − cos θ)⁵. Low sun on a dewy or waxy canopy turns leaves into mirrors, which is a capture problem, not a plant trait."],
+ p2a:["Set k = 2: does the photo change? Back at k = 1, threshold 0.1 gives about 13% albedo error. Will 0.3 help? Then try shadow softness 0.2.","<span class='hl'>k = 2: the photo is identical, but the albedo is 100% wrong.</span> Threshold 0.3 drops the error to about 0.1%. With softness 0.2 px the shadow jumps as sharply as paint does, and the best any threshold can do is about 10%. One photo cannot separate paint from light without extra assumptions."],
+ p2b:["Noise 0.02. Light spread 5°, then 40°. How large is the normal error?","<span class='hl'>About 14° at 5°, about 2.7° at 40°.</span> Bunched lights give nearly identical equations, so noise is amplified. The spread plays the same role as the baseline in stereo."],
+ p2c:["Sun at 50°. Raise the leaves from 5 to 30. What happens to the mean sky view and the sunlit share of the ground?","<span class='hl'>Sky view drops from about 0.81 to 0.27, sunlit ground from 0.81 to 0.29.</span> The sun is one direction, so each ground point is either lit or not. The sky is many directions, so sky view falls smoothly."],
+ p3a:["At sun angle 50° (the capture), how many pixels does the plain NeRF get wrong? Now set 130°.","<span class='hl'>0% at 50°, about 69% of pixels off by more than 20% at 130°.</span> The plain model can only replay the capture light. Shadows that should fall on the other side stay where they were."],
+ p3b:["K = 2 (5 numbers). The sky L is about 55% off. How far off is the shading E? Then try K = 3.","<span class='hl'>About 2.7%, and K = 3 gives the same.</span> The cosine weight has a zero coefficient at the third harmonic, so that wave cannot reach the shading at all. K = 4 brings it to about 0.8%."],
+ p3c:["July 15, LAI 3.5. What fraction of sunlight reaches the ground at solar noon, at 9 am and at 7 am?","<span class='hl'>About 15%, 9% and 1.6%.</span> Sun elevation is 69.5°, 47.2° and 25.1°. The path through the canopy grows as 1/sin e, and the light falls exponentially with path."],
+ p4a:["With 6 levels, drop the table from T = 64 to T = 16. How much worse does the fit get, and how many numbers are stored?","<span class='hl'>Error rises from about 2.6×10⁻⁶ to 8.8×10⁻⁴, and storage drops from 192 to 78 numbers.</span> A dense grid of all six levels would need 258. Too small a table and collisions stop being harmless."],
+ p4b:["Start at 8 bits. Now go to 4 bits, then 3. When does the error jump?","<span class='hl'>8 bits is almost free (5.8×10⁻⁶ against 5.1×10⁻⁶). 4 bits is about 50× worse and 3 bits about 750× worse.</span> Most of the savings come before the curve turns up. Real systems also use 8 to 16 bits for features."],
+ p4c:["3 M Gaussians, color degree 3, float32. How big? Then set degree 0 and 8-bit.","<span class='hl'>708 MB, then 42 MB.</span> 59 numbers × 4 bytes = 236 bytes each, against 14 numbers × 1 byte. Color coefficients are 48 of the 59 numbers, so color degree is the biggest single lever."],
+ p5a:["Phone chip (1 TFLOPS), 1080p, 64 samples per ray. How long does one NeRF frame take, and one splat frame?","<span class='hl'>NeRF: about 460 s, nearly 8 minutes. Splats: about 13 ms.</span> 2.07 M pixels × 64 samples × 1 MFLOP is 1.4×10¹⁴ FLOP. Splatting does a few thousand operations per pixel instead of a few hundred million."],
+ p5b:["Shininess 40. With K = 2, how bright is the fitted highlight peak compared with the true 0.56? Then try K = 6.","<span class='hl'>About 0.32 at K = 2, about 0.51 at K = 6.</span> Low orders flatten a sharp highlight into a glow. Each extra order costs 2 numbers per channel here, and (K + 1)² in 3D."],
+ p5c:["100 splats with mean opacity 0.3. How many are blended before T drops below 1/255?","<span class='hl'>About 15.</span> T after n splats ≈ 0.7ⁿ, and 0.7ⁿ &lt; 1/255 needs n &gt; ln 255 / ln(1/0.7) ≈ 15.5. The other 85 never get touched."],
+ p6a:["Tag at 2.3 m, between the leaf depths. With 0.05 m depth noise, how many of the 120 tag pixels are wrong? Then 0.15 m.","<span class='hl'>11, then 26.</span> Pixels whose true depth is near the tag's depth flip with noise. A tag far from any surface (try 3.0 m) is safe even with noise."],
+ p6b:["Wind swing 0.1. How tall is the static model's leaf peak compared with the aligned one?","<span class='hl'>About 0.32 against 0.99, and about 3.5× wider.</span> Averaging moving copies spreads the same amount of leaf over a wider band. Aligning first keeps the leaf sharp."],
+ p6c:["Shade light 0.3, haze 0.02. What NDVI do raw pixels give in sun and in shade, and what does albedo give?","<span class='hl'>Raw: 0.73 in sun, 0.65 in shade. Albedo: 0.80 everywhere.</span> The haze adds the same amount to a small red value and a big NIR value, which pulls the ratio down, more in shade where the signal is small."]
+};
+function expand(){
+  document.querySelectorAll("ctl").forEach(function(e){
+    var id=e.getAttribute("id"),mn=e.getAttribute("min"),mx=e.getAttribute("max"),st=e.getAttribute("step"),v=e.getAttribute("value"),lb=e.getAttribute("label"),un=e.getAttribute("unit")||"";
+    var d=document.createElement("div");d.className="row";
+    d.innerHTML="<label for='"+id+"'>"+lb+"</label><input id='"+id+"' type='range' min='"+mn+"' max='"+mx+"' step='"+st+"' value='"+v+"' data-unit='"+un+"'><output id='"+id+"o'></output>";
+    e.parentNode.replaceChild(d,e);
+  });
+  document.querySelectorAll("pred").forEach(function(e){
+    var k=e.getAttribute("k"),p=PRED[k],d=document.createElement("div");d.className="pred";
+    d.innerHTML="<p class='tag'>Ask the class</p><p>"+p[0]+"</p><button type='button' data-rev='ans-"+k+"'>Reveal</button><div class='ans' id='ans-"+k+"' hidden>"+p[1]+"</div>";
+    e.parentNode.replaceChild(d,e);
+  });
+  document.querySelectorAll("mbox").forEach(function(e){
+    var k=e.getAttribute("k"),d=document.createElement("div");d.style.display="contents";
+    d.innerHTML="<button class='mathbtn' type='button' data-math='"+k+"'>"+e.getAttribute("label")+"</button><div class='math' id='"+k+"' hidden></div>";
+    e.parentNode.replaceChild(d,e);
+  });
+}
+function outFmt(inp){var st=inp.getAttribute("step"),dp=st.indexOf(".")>=0?st.split(".")[1].length:0;return (+inp.value).toFixed(dp)+(inp.getAttribute("data-unit")||"")}
+function syncOut(inp){var o=document.getElementById(inp.id+"o");if(o)o.textContent=outFmt(inp)}
+Object.assign(PRED,PRED2);expand();
+document.querySelectorAll("input[type=range]").forEach(syncOut);
+document.addEventListener("input",function(e){if(e.target&&e.target.type==="range")syncOut(e.target)});
+
+function group(sel,attr,fn){var bs=document.querySelectorAll(sel+" button");bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(o){o.setAttribute("aria-pressed",o===b?"true":"false")});fn(b.getAttribute(attr))})})}
+
+/* ================= Day 1A: Lambert ================= */
+function leafCol(v){var g=Math.round(40+215*M4.clamp(v,0,1));return "rgb("+Math.round(g*0.45)+","+g+","+Math.round(g*0.35)+")"}
+function draw1a(){
+  var x=cx.c1a,e=V("e1a"),b=V("b1a"),rho=V("rho1a"),L=M4.lambert(e,b,rho);bg(x);
+  var gy=300,cxp=160,cyp=210,len=170;
+  ln(x,10,gy,320,gy,css("--dim"),1);txt(x,"ground",14,gy+16,css("--dim"),10);
+  ln(x,cxp,cyp,cxp,gy,css("--line"),2);
+  var c=Math.cos(b*D2R),s=Math.sin(b*D2R);
+  x.beginPath();x.moveTo(cxp-len/2*c,cyp-len/2*s);x.lineTo(cxp+len/2*c,cyp+len/2*s);x.strokeStyle=leafCol(L.ndl);x.lineWidth=9;x.lineCap="round";x.stroke();x.lineCap="butt";
+  arrow(x,cxp,cyp,cxp+70*s,cyp-70*c,css("--sky"),2);txt(x,"n",cxp+78*s,cyp-78*c,css("--sky"),12,"center");
+  var sx=cxp+140*Math.cos(e*D2R),sy=cyp-140*Math.sin(e*D2R);
+  dot(x,sx,sy,10,css("--amber"));arrow(x,sx,sy,cxp+18*Math.cos(e*D2R),cyp-18*Math.sin(e*D2R),css("--amber"),1.5);txt(x,"sun",sx,sy-16,css("--amber"),11,"center");
+  txt(x,"n·l = "+f2(L.ndl),14,24,css("--fg"),13);txt(x,"leaf shade = brightness",14,40,css("--dim"),10);
+  var Lx=380,R=620,T=40,B=300;function X(v){return Lx+v/90*(R-Lx)}function Y(v){return B-v*(B-T)}
+  axes(x,Lx,R,T,B,"sun elevation (°)","n·l");
+  [0,30,60,90].forEach(function(v){txt(x,""+v,X(v),B+14,css("--dim"),10,"center")});[0,0.5,1].forEach(function(v){txt(x,f1(v),Lx-6,Y(v)+3,css("--dim"),10,"right")});
+  curve(x,91,function(i){return X(i)},function(i){return Y(Math.max(0,Math.sin(i*D2R)))},css("--sky"),1.5,[5,4]);
+  curve(x,91,function(i){return X(i)},function(i){return Y(Math.max(0,Math.sin((i+b)*D2R)))},css("--amber"),2);
+  dot(x,X(e),Y(L.ndl),5,css("--amber"));
+  txt(x,"blue dashed: flat leaf",Lx,12,css("--sky"),10);txt(x,"amber: your tilt",Lx+150,12,css("--amber"),10);
+}
+function upd1a(){
+  var e=V("e1a"),b=V("b1a"),rho=V("rho1a"),L=M4.lambert(e,b,rho),fl=M4.lambert(e,0,rho);
+  $("#r1a").textContent="n·l = sin("+f0(e)+"° + "+f0(b)+"°) = "+f3(L.ndl)+" · flat "+f3(fl.ndl)+" · ratio "+(fl.ndl>0?f2(L.ndl/fl.ndl)+"×":"–")+" · radiance "+f1(L.L)+" W/m²/sr";
+  $("#m1a").innerHTML="<p>Lambert: a matte surface sends the same radiance in every direction.</p><p>L = ρ·E·max(0, n·l) / π</p><p>Leaf normal tilted by β toward the sun:  n = (sin β, cos β)</p><p>Sun at elevation e:  l = (cos e, sin e)</p><p>n·l = sin β cos e + cos β sin e = <span class='hl'>sin(e + β)</span></p><p>Yours: sin("+f0(e+b)+"°) = "+f3(L.ndl)+"</p><p>With ρ = "+f2(rho)+" and E = 1000 W/m²:  L = "+f2(rho)+" × 1000 × "+f3(L.ndl)+" / π = <span class='hl'>"+f1(L.L)+" W/m²/sr</span></p><p class='okc'>No view angle anywhere: a Lambert leaf looks the same from every camera. That is the assumption SfM and NeRF quietly like.</p>";
+}
+
+/* ================= Day 1B: Phong lobe ================= */
+function draw1b(){
+  var x=cx.c1b,e=V("e1b"),tv=V("v1b"),ks=V("ks1b"),s=V("s1b"),kd=0.1;bg(x);
+  var ox=320,oy=310,sc=230;
+  ln(x,60,oy,580,oy,css("--dim"),1);x.fillStyle=css("--ok");x.fillRect(200,oy-3,240,6);txt(x,"waxy leaf",440,oy+16,css("--ok"),10,"right");
+  var Imax=kd+ks;function rad(I){return 30+sc*I/Math.max(Imax,0.15)*0.8}
+  x.beginPath();for(var t=0;t<=180;t++){var I=M4.phong(t,e,kd,ks,s).I,r=rad(I),px=ox+r*Math.cos(t*D2R),py=oy-r*Math.sin(t*D2R);if(t===0)x.moveTo(px,py);else x.lineTo(px,py)}
+  x.strokeStyle=css("--amber");x.lineWidth=2.5;x.stroke();
+  x.beginPath();for(t=0;t<=180;t++){var r2=rad(kd*Math.sin(e*D2R));var p2x=ox+r2*Math.cos(t*D2R),p2y=oy-r2*Math.sin(t*D2R);if(t===0)x.moveTo(p2x,p2y);else x.lineTo(p2x,p2y)}
+  x.strokeStyle=css("--sky");x.lineWidth=1;x.setLineDash([4,4]);x.stroke();x.setLineDash([]);
+  var sx=ox+270*Math.cos(e*D2R),sy=oy-270*Math.sin(e*D2R);dot(x,Math.min(sx,620),Math.max(sy,16),9,css("--amber"));arrow(x,ox+200*Math.cos(e*D2R),oy-200*Math.sin(e*D2R),ox+12*Math.cos(e*D2R),oy-12*Math.sin(e*D2R),css("--amber"),1.5);
+  var mr=180-e;ln(x,ox,oy,ox+260*Math.cos(mr*D2R),oy-260*Math.sin(mr*D2R),css("--dim"),1,[3,5]);txt(x,"mirror",ox+150*Math.cos(mr*D2R)+(mr>90?-8:8),oy-150*Math.sin(mr*D2R),css("--dim"),10,mr>90?"right":"left");
+  var P=M4.phong(tv,e,kd,ks,s),vr=rad(P.I);ln(x,ox,oy,ox+300*Math.cos(tv*D2R),oy-300*Math.sin(tv*D2R),css("--ok"),1);
+  ring(x,ox+vr*Math.cos(tv*D2R),oy-vr*Math.sin(tv*D2R),6,css("--ok"),2);txt(x,"you",ox+300*Math.cos(tv*D2R),oy-300*Math.sin(tv*D2R)-6,css("--ok"),11,"center");
+  txt(x,"amber: brightness seen from each direction (distance from leaf center)",14,20,css("--dim"),10);txt(x,"blue dashed: the matte part alone",14,34,css("--sky"),10);
+}
+function upd1b(){
+  var e=V("e1b"),tv=V("v1b"),ks=V("ks1b"),s=V("s1b"),P=M4.phong(tv,e,0.1,ks,s),hw=M4.phongHalf(s);
+  $("#r1b").textContent="matte "+f3(P.diff)+" + highlight "+f3(P.spec)+" = "+f3(P.I)+" · highlight half-width "+f1(hw)+"°";
+  $("#m1b").innerHTML="<p>Phong:  I = k_d·max(0, n·l) + k_s·max(0, r·v)ˢ</p><p>r = mirror of l about n; v = direction to the viewer.</p><p>Flat leaf, sun at "+f0(e)+"°: mirror direction at 180° − "+f0(e)+"° = "+f0(180-e)+"°</p><p>You at "+f0(V("v1b"))+"°:  r·v = cos("+f0(V("v1b"))+"° − "+f0(180-e)+"°) = "+f3(P.rv)+"</p><p>highlight = "+f2(ks)+" × "+f3(P.rv)+"^"+f0(s)+" = <span class='hl'>"+f3(P.spec)+"</span></p><h4>Width of the highlight</h4><p>cosˢ(θ) = ½  →  θ½ = acos(0.5^(1/s)) = <span class='hl'>"+f1(hw)+"°</span></p><p class='okc'>Big s → tight, mirror-like highlight. It moves when the camera moves, which breaks the 'same color from every view' rule.</p>";
+}
+
+/* ================= Day 1C: GGX and Fresnel ================= */
+function draw1c(){
+  var x=cx.c1c,a=V("a1c"),F0=V("F1c"),th=V("t1c");bg(x);
+  var L=50,R=300,T=40,B=300;axes(x,L,R,T,B,"facet tilt θh (°)","D / D(0)");
+  [0,30,60,90].forEach(function(v){txt(x,""+v,L+v/90*(R-L),B+14,css("--dim"),10,"center")});
+  [0.1,0.5].forEach(function(ar){var d0=M4.ggxD(0,ar);curve(x,91,function(i){return L+i/90*(R-L)},function(i){return B-M4.ggxD(i,ar)/d0*(B-T)},css("--line"),1.2,[4,4]);});
+  var d0=M4.ggxD(0,a);curve(x,91,function(i){return L+i/90*(R-L)},function(i){return B-M4.ggxD(i,a)/d0*(B-T)},css("--amber"),2.5);
+  var hw=M4.ggxHalf(a);ln(x,L+hw/90*(R-L),B,L+hw/90*(R-L),B-(B-T)/2,css("--amber"),1,[3,3]);
+  txt(x,"gray dashed: α = 0.1 and 0.5",L,12,css("--dim"),10);
+  var L2=360,R2=620;axes(x,L2,R2,T,B,"incidence θ (°)","reflectance F");
+  [0,30,60,90].forEach(function(v){txt(x,""+v,L2+v/90*(R2-L2),B+14,css("--dim"),10,"center")});[0,0.5,1].forEach(function(v){txt(x,f1(v),L2-6,B-v*(B-T)+3,css("--dim"),10,"right")});
+  curve(x,90,function(i){return L2+i/90*(R2-L2)},function(i){return B-M4.schlick(0.04,i)*(B-T)},css("--sky"),1.2,[4,4]);
+  curve(x,90,function(i){return L2+i/90*(R2-L2)},function(i){return B-M4.schlick(0.9,i)*(B-T)},css("--line"),1.2,[4,4]);
+  curve(x,90,function(i){return L2+i/90*(R2-L2)},function(i){return B-M4.schlick(F0,i)*(B-T)},css("--amber"),2.5);
+  dot(x,L2+th/90*(R2-L2),B-M4.schlick(F0,th)*(B-T),5,css("--amber"));
+  txt(x,"blue: wax (0.04) · gray: gold (0.9)",L2,12,css("--dim"),10);
+}
+function upd1c(){
+  var a=V("a1c"),F0=V("F1c"),th=V("t1c"),F=M4.schlick(F0,th),hw=M4.ggxHalf(a);
+  $("#r1c").textContent="D(0) = "+f2(M4.ggxD(0,a))+" · highlight half-width "+f1(hw)+"° · F("+f0(th)+"°) = "+f3(F)+" ("+f0(F*100)+"%)";
+  $("#m1c").innerHTML="<p>Cook-Torrance:  f = D·F·G / (4 (n·l)(n·v))</p><h4>D: how facet normals spread (GGX)</h4><p>D(θh) = α² / ( π · (cos²θh·(α² − 1) + 1)² )</p><p>α = "+f2(a)+":  D(0) = "+f2(M4.ggxD(0,a))+",  half-width <span class='hl'>"+f1(hw)+"°</span></p><h4>F: Fresnel (Schlick)</h4><p>F(θ) = F₀ + (1 − F₀)(1 − cos θ)⁵</p><p>F("+f0(th)+"°) = "+f2(F0)+" + "+f2(1-F0)+" × (1 − "+f3(Math.cos(th*D2R))+")⁵ = <span class='hl'>"+f3(F)+"</span></p><h4>G: facets shadowing each other</h4><p>Matters near grazing; left out here.</p><p class='okc'>Roughness sets the width, F₀ sets the color and strength, and every surface heads to F = 1 at 90°.</p>";
+}
+
+/* ================= Day 2A: intrinsic split ================= */
+function gray(v){var g=Math.round(255*M4.clamp(v,0,1));return "rgb("+g+","+g+","+g+")"}
+function draw2a(){
+  var x=cx.c2a,k=V("k2a"),t=V("t2a"),ed=V("ed2a"),A=M4.stripAlb(),S=M4.stripShade(ed),I=A.map(function(a,i){return a*S[i]}),r=M4.retinex(I,t);bg(x);
+  var L=120,w=5,rows=[["photo I = A·S",I,3.2],["true albedo A",A,3.2],["your albedo k·Â",r.A.map(function(v){return v*k}),3.2],["your shading Ŝ/k",r.S.map(function(v){return v/k}),1]];
+  rows.forEach(function(rw,j){var y=14+j*40;txt(x,rw[0],L-8,y+18,css("--dim"),10,"right");for(var i=0;i<M4.NS;i++){x.fillStyle=gray(rw[1][i]*rw[2]);x.fillRect(L+i*w,y,w,28)}});
+  var T=190,B=330;axes(x,L,L+M4.NS*w,T,B,"","");txt(x,"jump in log I between neighbors",L,T-6,css("--dim"),10);
+  var mid=(T+B)/2,sc=40;ln(x,L,mid,L+M4.NS*w,mid,css("--line"),1);
+  x.globalAlpha=.15;x.fillStyle=css("--amber");x.fillRect(L,mid-t*sc,M4.NS*w,2*t*sc);x.globalAlpha=1;
+  ln(x,L,mid-t*sc,L+M4.NS*w,mid-t*sc,css("--amber"),1,[4,3]);ln(x,L,mid+t*sc,L+M4.NS*w,mid+t*sc,css("--amber"),1,[4,3]);
+  for(var i=1;i<M4.NS;i++){var g=Math.log(I[i])-Math.log(I[i-1]);if(Math.abs(g)<1e-4)continue;var big=Math.abs(g)>t;ln(x,L+i*w,mid,L+i*w,mid-M4.clamp(g,-1.6,1.6)*sc,big?css("--fg"):css("--sky"),2)}
+  txt(x,"white: called paint (kept in albedo) · blue: called light",L+M4.NS*w,B+26,css("--dim"),10,"right");txt(x,"band = ± threshold",L,B+26,css("--amber"),10);
+}
+function upd2a(){
+  var k=V("k2a"),t=V("t2a"),ed=V("ed2a"),A=M4.stripAlb(),S=M4.stripShade(ed),I=A.map(function(a,i){return a*S[i]}),r=M4.retinex(I,t),Ak=r.A.map(function(v){return v*k}),e=M4.relErr(Ak,A),rec=0;
+  for(var i=0;i<M4.NS;i++)rec=Math.max(rec,Math.abs(Ak[i]*r.S[i]/k-I[i]));
+  $("#r2a").textContent="albedo error "+f1(100*e)+"% · photo rebuilt from your split: max error "+f3(rec);
+  $("#m2a").innerHTML="<p>Each pixel:  I = A · S   (albedo × shading)</p><p>One equation, two unknowns per pixel. For any k:  I = (k·A)·(S/k).  k = "+f2(k)+" changes the albedo by "+f0(Math.abs(k-1)*100)+"% and the photo by 0.</p><h4>Retinex rule</h4><p>Take logs:  log I = log A + log S</p><p>Neighbor jumps:  Δlog I = Δlog A + Δlog S</p><p>Assume paint changes in sharp jumps and light changes slowly:</p><p>Δlog Â = Δlog I  if |Δlog I| &gt; "+f2(t)+", else 0</p><p>Add up the kept jumps to get log Â, then Ŝ = I / Â, scaled so the brightest shading is 1.</p><p>Paint jumps here: soil→leaf ln(0.30/0.12) = 0.92, leaf→stem ln(2) = 0.69. Shadow: ln(1/0.3) = 1.20 spread over about 4 × softness pixels.</p><p class='okc'>Error now: <span class='hl'>"+f1(100*e)+"%</span>. When the shadow edge is as sharp as a paint edge, no threshold can tell them apart.</p>";
+}
+
+/* ================= Day 2B: photometric stereo ================= */
+var seed2b=3;
+function draw2b(){
+  var x=cx.c2b,sp=V("sp2b"),sd=V("sd2b"),P=M4.photoStereo(sp,sd,seed2b);bg(x);
+  var L=40,R=600,y0=190,sz=520;function X(i){return L+(i+0.5)/M4.PS_N*(R-L)}function Y(z){return y0-z*sz}
+  P.lights.forEach(function(l,j){var px=320+150*l[0],py=Math.max(y0-150*l[1],44);dot(x,px,py,7,css("--amber"));ln(x,px,py,320,y0-40,css("--amber"),1,[2,4])});
+  curve(x,M4.PS_N,function(i){return X(i)},function(i){return Y(P.S.z[i])},css("--sky"),2.5);
+  curve(x,M4.PS_N,function(i){return X(i)},function(i){return Y(P.zr[i])},css("--amber"),2,[6,3]);
+  for(var i=0;i<M4.PS_N;i+=2){var p=P.pts[i],bx=X(i),by=Y(P.S.z[i]);arrow(x,bx,by,bx+26*p.nx,by-26*p.nz,css("--sky"),1);if(p.ok)ln(x,bx,by,bx+30*p.ex,by-30*p.ez,css("--amber"),2)}
+  var T2=245,B2=326;axes(x,L,R,T2,B2,"position across the leaf","");txt(x,"albedo ρ",L,T2-6,css("--dim"),10);
+  function YA(v){return B2-v/0.7*(B2-T2)}
+  curve(x,M4.PS_N,function(i){return X(i)},function(i){return YA(P.S.rho[i])},css("--sky"),2);
+  P.pts.forEach(function(p,i){if(p.ok)dot(x,X(i),YA(M4.clamp(p.alb,0,0.7)),2.5,css("--amber"))});
+  txt(x,"blue: true leaf and normals · amber: recovered (dashed = shape rebuilt from normals)",L,18,css("--dim"),10);
+}
+function upd2b(){
+  var sp=V("sp2b"),sd=V("sd2b"),P=M4.photoStereo(sp,sd,seed2b),M=P.LtL,det=M[0]*M[2]-M[1]*M[1],tr=M[0]+M[2],l1=tr/2+Math.sqrt(tr*tr/4-det),l2=tr/2-Math.sqrt(tr*tr/4-det);
+  $("#r2b").textContent="normal error "+f1(P.angErr)+"° · albedo error "+f1(100*P.albErr)+"% · condition "+f1(l1/l2);
+  $("#m2b").innerHTML="<p>Unknown per point: b = ρ·n = (bₓ, b_z)</p><p>Light j:  Iⱼ = lⱼ · b   (one linear equation each)</p><p>Lights at −"+f0(sp)+"°, 0°, +"+f0(sp)+"° from straight up:  lⱼ = (sin aⱼ, cos aⱼ)</p><p>Least squares:  b = (LᵀL)⁻¹ Lᵀ I</p><p>LᵀL = [ "+f3(M[0])+"  "+f3(M[1])+" ;  "+f3(M[1])+"  "+f3(M[2])+" ]</p><p>Its eigenvalues are "+f3(l1)+" and "+f3(l2)+", so noise along the weak direction grows by 1/√"+f3(l2)+" = <span class='hl'>"+f1(1/Math.sqrt(l2))+"×</span></p><p>Then ρ = |b|,  n = b / |b|.  Lights with n·l &lt; 0 see shadow and are dropped.</p><p class='okc'>Spread works like stereo baseline: with lights bunched together, tilt left and tilt right give almost the same pixel.</p>";
+}
+
+/* ================= Day 2C: visibility ================= */
+var leaves2c=null,n2c=-1;
+function draw2c(){
+  var x=cx.c2c,n=V("n2c"),e=V("e2c"),gx=V("x2c");if(n!==n2c){leaves2c=M4.canopy(n,5);n2c=n}bg(x);
+  var L=20,R=620,gy=250,sc=150;function X(v){return L+v*sc}function Y(h){return gy-h*sc*0.85}
+  ln(x,L,gy,R,gy,css("--dim"),1);
+  for(var k=0;k<30;k++){var a=(k+0.5)/30*PI,blk=M4.visAt(gx,a/D2R,leaves2c,1).sun;ln(x,X(gx),gy,X(gx)+220*Math.cos(a),gy-220*Math.sin(a),blk?css("--sky"):css("--line"),1,blk?[]:[2,4])}
+  leaves2c.forEach(function(s){ln(x,X(s[0]),Y(s[1]),X(s[2]),Y(s[3]),css("--ok"),4)});
+  var v=M4.visAt(gx,e,leaves2c);ln(x,X(gx),gy,X(gx)+400*Math.cos(e*D2R),gy-400*Math.sin(e*D2R),v.sun?css("--amber"):css("--bad"),2.5);dot(x,X(gx),gy,5,css("--fg"));
+  var sv=[],ss=[];for(var i=0;i<120;i++){var q=M4.visAt((i+0.5)/30,e,leaves2c,45);sv.push(q.svf);ss.push(q.sun)}
+  for(i=0;i<120;i++){x.fillStyle=ss[i]?css("--amber"):css("--panel");x.fillRect(X((i)/30),gy+6,sc/30+0.5,10)}
+  var T2=278,B2=346;curve(x,120,function(i){return X((i+0.5)/30)},function(i){return B2-sv[i]*(B2-T2)},css("--sky"),2);ln(x,L,B2,R,B2,css("--line"),1);
+  txt(x,"sun flecks",R,gy+28,css("--amber"),10,"right");txt(x,"sky view (0 to 1)",L,T2+2,css("--sky"),10,"left");
+  txt(x,"blue rays reach the sky · amber/red: the sun ray from your ground point",L,16,css("--dim"),10);
+}
+function upd2c(){
+  var n=V("n2c"),e=V("e2c"),gx=V("x2c");if(n!==n2c){leaves2c=M4.canopy(n,5);n2c=n}var v=M4.visAt(gx,e,leaves2c),ms=0,mv=0;
+  for(var i=0;i<160;i++){var q=M4.visAt((i+0.5)/40,e,leaves2c);ms+=q.sun?1:0;mv+=q.svf}
+  $("#r2c").textContent="here: sun "+(v.sun?"visible":"blocked")+", sky view "+f2(v.svf)+" · whole row: sunlit "+f2(ms/160)+", mean sky view "+f2(mv/160);
+  $("#m2c").innerHTML="<p>Visibility V(x, ω) = 1 if a ray from x in direction ω escapes, else 0.</p><p>Sun light at x:  E_sun · V(x, ω_sun) · (n·l)</p><p>Sky light (uniform sky, flat ground):</p><p>E_sky(x) = E_open · ∫ V(x, ω) sin e de / ∫ sin e de   (2D, e from 0 to 180°)</p><p>The sin e weight is n·ω for a flat ground point: overhead sky counts most.</p><p>Here: sky view = <span class='hl'>"+f2(v.svf)+"</span> from 90 rays; each ray is tested against "+n+" leaves.</p><p class='okc'>The sun gives on/off flecks; the sky gives a smooth fraction. NeRFactor learns V for every point and direction.</p>";
+}
+
+/* ================= Day 3A: relighting ================= */
+var r3cache={};
+function rel3(){var th=V("th3a"),sk=V("sk3a"),key=th+"_"+sk;if(!r3cache[key]){r3cache={};r3cache[key]=M4.relight(50,th,sk)}return r3cache[key]}
+function strip(x,y,vals,lbl){txt(x,lbl,20,y-4,css("--dim"),10);var w=600/vals.length;for(var i=0;i<vals.length;i++){var v=M4.clamp(vals[i]/0.3,0,1),g=Math.round(255*v);x.fillStyle="rgb("+Math.round(g*0.55)+","+g+","+Math.round(g*0.4)+")";x.fillRect(20+i*w,y,w+0.5,26)}}
+function draw3a(){
+  var x=cx.c3a,th=V("th3a"),r=rel3();bg(x);
+  var L=20,sc=200,gy=150;function X(v){return L+v*sc}function Y(h){return gy-h*100}
+  x.beginPath();x.moveTo(X(0),gy+10);r.B.forEach(function(p){x.lineTo(X(p.x),Y(p.h))});x.lineTo(X(M4.RX),gy+10);x.closePath();x.fillStyle=css("--panel");x.fill();
+  for(var i=1;i<r.B.length;i++){var p=r.B[i],q=r.B[i-1];ln(x,X(q.x),Y(q.h),X(p.x),Y(p.h),p.v?css("--amber"):css("--line"),3)}
+  var sx=320+260*Math.cos(th*D2R),sy=gy-130*Math.sin(th*D2R);dot(x,sx,Math.max(sy,12),9,css("--amber"));
+  var s0x=320+260*Math.cos(50*D2R),s0y=gy-130*Math.sin(50*D2R);ring(x,s0x,s0y,8,css("--sky"),1.5);txt(x,"capture sun",s0x,s0y-12,css("--sky"),10,"center");
+  txt(x,"amber surface: in direct sun now",L,16,css("--amber"),10);
+  strip(x,190,r.cap,"captured at sun 50°");strip(x,248,r.plain,"plain NeRF shown at sun "+f0(th)+"° (light baked in)");strip(x,306,r.tru,"factored: albedo × new shading (truth)");
+}
+function upd3a(){
+  var th=V("th3a"),sk=V("sk3a"),r=rel3();
+  $("#r3a").textContent="plain NeRF: "+f0(100*r.frac)+"% of pixels off by >20% · mean error "+f0(100*r.mre)+"% · factored model: 0%";
+  $("#m3a").innerHTML="<p>Captured pixel:  I₀(x) = A(x) · S(x; sun₀)</p><p>Shading:  S = (1 − sky)·V_sun·max(0, n·l) + sky·∫ V(ω) max(0, n·ω) dω / ∫ sin e de</p><p>Plain NeRF stores I₀ and replays it for any sun:  Î = I₀</p><p>Factored model stores A, n, V and recomputes:  Î = A · S(x; new sun)</p><p>Sun now "+f0(th)+"°, sky share "+f2(sk)+".</p><p>Pixels with |I₀ − I_true| &gt; 20%:  <span class='hl'>"+f0(100*r.frac)+"%</span></p><p class='okc'>Relighting needs A, n and V, which is why the albedo, normals and visibility concepts come first. Real NeRFactor also needs the capture light, which it estimates too.</p>";
+}
+
+/* ================= Day 3B: harmonics ================= */
+function draw3b(){
+  var x=cx.c3b,K=V("K3b"),kap=V("sh3b"),ths=V("s3b"),Lr=M4.envL(ths,kap,1),LK=M4.fourier(Lr,K),E=M4.irr(Lr),EK=M4.irr(LK);bg(x);
+  var L=50,R=620,T=26,B=160,mx=0;Lr.forEach(function(v){mx=Math.max(mx,v)});
+  axes(x,L,R,T,B,"direction around the plot (0° to 360°)","sky light L(θ)");
+  function Y1(v){return B-M4.clamp(v,-0.2*mx,mx)/mx*(B-T)}
+  curve(x,M4.CH_M,function(i){return L+i/M4.CH_M*(R-L)},function(i){return Y1(Lr[i])},css("--sky"),1.5);
+  curve(x,M4.CH_M,function(i){return L+i/M4.CH_M*(R-L)},function(i){return Y1(LK[i])},css("--amber"),2);
+  var T2=214,B2=330,me=0;E.forEach(function(v){me=Math.max(me,v)});axes(x,L,R,T2,B2,"surface normal direction (0° to 360°)","matte shading E(n)");
+  function Y2(v){return B2-v/me*(B2-T2)}
+  curve(x,E.length,function(i){return L+i/E.length*(R-L)},function(i){return Y2(E[i])},css("--sky"),3);
+  curve(x,EK.length,function(i){return L+i/E.length*(R-L)},function(i){return Y2(EK[i])},css("--amber"),2,[6,3]);
+  txt(x,"blue: exact · amber: from "+(2*K+1)+" numbers",R,T-8,css("--dim"),10,"right");
+}
+function upd3b(){
+  var K=V("K3b"),kap=V("sh3b"),ths=V("s3b"),Lr=M4.envL(ths,kap,1),LK=M4.fourier(Lr,K),E=M4.irr(Lr),EK=M4.irr(LK),eL=M4.rmsRel(LK,Lr),eE=M4.rmsRel(EK,E);
+  $("#r3b").textContent=(2*K+1)+" numbers · sky error "+f1(100*eL)+"% · shading error "+f2(100*eE)+"%";
+  var cs=[0,1,2,3,4,5,6].map(function(k){return f3(M4.clampCosCoef(k))}).join(", ");
+  $("#m3b").innerHTML="<p>Sky as waves:  L(θ) ≈ a₀ + Σₖ₌₁ᴷ (aₖ cos kθ + bₖ sin kθ),  2K + 1 numbers</p><p>Matte shading at normal direction φ:  E(φ) = ∫ L(θ) · max(0, cos(θ − φ)) dθ</p><p>This is a convolution, so each wave is just scaled:  E₀ = 2π·c₀·L₀  and  Eₖ = π·cₖ·Lₖ for k ≥ 1</p><p>Cosine-lobe coefficients cₖ for k = 0…6:</p><p class='hl'>"+cs+"</p><p>They shrink fast and c₃ = c₅ = 0. Waves above k ≈ 2 barely reach E.</p><p>K = "+K+":  sky error "+f1(100*eL)+"%, shading error <span class='hl'>"+f2(100*eE)+"%</span></p><p class='okc'>In 3D the same fact gives 9 spherical-harmonic numbers per color channel (Ramamoorthi and Hanrahan, 2001). Shiny surfaces need more, because their lobe is narrow.</p>";
+}
+
+/* ================= Day 3C: sun by the hour ================= */
+function draw3c(){
+  var x=cx.c3c,h=V("h3c"),d=V("d3c"),LAI=V("L3c"),e=M4.sunElev(h,d),en=M4.sunElev(12,d);bg(x);
+  var L=50,R=290,T=40,B=300;function X(v){return L+(v-5)/14*(R-L)}function Y(v){return B-v/90*(B-T)}
+  axes(x,L,R,T,B,"solar hour","sun elevation (°)");[6,9,12,15,18].forEach(function(v){txt(x,""+v,X(v),B+14,css("--dim"),10,"center")});[0,30,60,90].forEach(function(v){txt(x,""+v,L-6,Y(v)+3,css("--dim"),10,"right")});
+  curve(x,141,function(i){return X(5+i/10)},function(i){return Y(Math.max(0,M4.sunElev(5+i/10,d)))},css("--amber"),2);
+  dot(x,X(h),Y(Math.max(0,e)),6,css("--amber"));
+  var L2=360,R2=620;function X2(v){return L2+v*(R2-L2)}function Y2(c){return T+c/LAI*(B-T)}
+  axes(x,L2,R2,T,B,"share of sunlight left","");txt(x,"leaf area above ↓",L2,T-6,css("--dim"),10);
+  [0,0.5,1].forEach(function(v){txt(x,f1(v),X2(v),B+14,css("--dim"),10,"center")});
+  curve(x,61,function(i){return X2(M4.sunlit(i/60*LAI,en))},function(i){return Y2(i/60*LAI)},css("--sky"),1.5,[5,4]);
+  curve(x,61,function(i){return X2(M4.sunlit(i/60*LAI,e))},function(i){return Y2(i/60*LAI)},css("--amber"),2.5);
+  txt(x,"top of canopy",R2,T+12,css("--dim"),10,"right");txt(x,"ground",R2,B-6,css("--dim"),10,"right");
+  txt(x,"amber: now · blue dashed: solar noon",L2,12,css("--dim"),10);
+}
+function upd3c(){
+  var h=V("h3c"),d=V("d3c"),LAI=V("L3c"),e=M4.sunElev(h,d),en=M4.sunElev(12,d),k=e>0?0.5/Math.sin(e*D2R):Infinity,g=M4.sunlit(LAI,e),gn=M4.sunlit(LAI,en);
+  $("#r3c").textContent="elevation "+f1(e)+"° · k = "+(isFinite(k)?f3(k):"∞")+" · reaching ground "+f1(100*g)+"% (noon "+f1(100*gn)+"%)";
+  $("#m3c").innerHTML="<p>Declination:  δ = 23.44° · sin(2π(284 + n)/365) = "+f2(M4.decl(d))+"°  (day "+d+")</p><p>Hour angle:  H = 15° × (hour − 12) = "+f1(15*(h-12))+"°</p><p>Elevation:  sin e = sin φ sin δ + cos φ cos δ cos H,  φ = 42.03° (Ames)</p><p>e = <span class='hl'>"+f1(e)+"°</span></p><p>Beer-Lambert with a moving sun:  share left = e^(−k·LAI),  k = G / sin e,  G = 0.5</p><p>k = 0.5 / sin "+f1(e)+"° = "+(isFinite(k)?f3(k):"∞")+",  share at the ground = <span class='hl'>"+f1(100*g)+"%</span></p><p class='okc'>Same formula as Week 1 (σ·δ = k·ΔLAI). The sun's angle only changes the path length.</p>";
+}
+
+/* ================= Day 4A: hash grid ================= */
+var fit4=null,key4="";
+function getFit(){var nL=V("nL4a"),T=V("T4a"),k=nL+"_"+T;if(k!==key4){fit4=M4.hgFit(nL,T);fit4.mask=M4.usedMask(nL,T);key4=k}return fit4}
+function draw4a(){
+  var x=cx.c4a,f=getFit();bg(x);
+  var L=40,R=610,T=24,B=196;function X(v){return L+v*(R-L)}function Y(v){return B-(v+0.1)/1.3*(B-T)}
+  axes(x,L,R,T,B,"","");
+  curve(x,301,function(i){return X(i/300)},function(i){return Y(M4.target(i/300))},css("--sky"),2);
+  curve(x,f.rows.length,function(i){return X((i+0.5)/M4.HG_S)},function(i){return Y(M4.clamp(M4.hgPred(f.th,f.rows[i]),-0.1,1.2))},css("--amber"),2);
+  txt(x,"blue: target · amber: sum of interpolated grid features · red ticks share a slot",L,12,css("--dim"),10);
+  var y0=226,RX2=470;function X2(v){return L+v*(RX2-L)}for(var l=0;l<f.nL;l++){var Nl=M4.HG_N0*Math.pow(2,l),y=y0+l*20,cnt={};txt(x,"L"+l,L-6,y+4,css("--dim"),9,"right");
+    var hashed=Nl+1>f.T;for(var v=0;v<=Nl;v++){var h=hashed?(v*2654435761)%f.T:v;cnt[h]=(cnt[h]||0)+1}
+    for(v=0;v<=Nl;v++){var h2=hashed?(v*2654435761)%f.T:v;ln(x,X2(v/Nl),y-5,X2(v/Nl),y+5,cnt[h2]>1?css("--bad"):css("--ok"),Nl>64?1:1.5)}
+    txt(x,(Nl+1)+" verts"+(hashed?" → "+f.T+" slots":""),R,y+4,hashed?css("--bad"):css("--dim"),9,"right")}
+}
+function upd4a(){
+  var f=getFit(),dense=0;for(var l=0;l<f.nL;l++)dense+=M4.HG_N0*Math.pow(2,l)+1;
+  $("#r4a").textContent="stored "+f.used+" numbers (dense: "+dense+") · collisions "+f.coll+" · error "+ex(f.mse);
+  $("#m4a").innerHTML="<p>Level l has Nₗ = 4·2ˡ cells and Nₗ + 1 vertices.</p><p>Slot of vertex v:  v if Nₗ + 1 ≤ T,  else  (v · 2654435761) mod T</p><p>Feature at x (one number per slot):</p><p>y(x) = Σₗ [ (1 − w)·θ[slot(v)] + w·θ[slot(v + 1)] ],  v = ⌊x·Nₗ⌋,  w = x·Nₗ − v</p><p>That is linear in θ, so the best θ comes from least squares:  (XᵀX + λI) θ = Xᵀy on "+M4.HG_S+" samples.</p><p>Levels "+f.nL+", table "+f.T+": "+f.used+" numbers, "+f.coll+" vertices share a slot, mean squared error <span class='hl'>"+ex(f.mse)+"</span></p><p class='okc'>Instant-NGP: 16 levels, T up to 2¹⁹ per level, 2 features per slot, then a tiny network instead of a plain sum. Collisions are tolerated because a gradient step favors the vertex that matters more.</p>";
+}
+
+/* ================= Day 4B: quantize and prune ================= */
+function draw4b(){
+  var x=cx.c4b,f=getFit(),b=V("b4b"),p=V("p4b"),c=M4.compress(f.th,b,p,f.mask);bg(x);
+  var L=40,R=400,T=30,B=320;function X(v){return L+v*(R-L)}function Y(v){return B-(v+0.1)/1.3*(B-T)}
+  axes(x,L,R,T,B,"position x","");
+  curve(x,301,function(i){return X(i/300)},function(i){return Y(M4.target(i/300))},css("--sky"),2);
+  curve(x,f.rows.length,function(i){return X((i+0.5)/M4.HG_S)},function(i){return Y(M4.clamp(M4.hgPred(c.q,f.rows[i]),-0.1,1.2))},css("--amber"),2);
+  txt(x,"amber: after compression",L,T-10,css("--amber"),10);
+  var L2=450,R2=620;function X2(v){return L2+(v-1)/15*(R2-L2)}function Y2(m){return B-(Math.log10(Math.max(m,1e-7))+7)/7*(B-T)}
+  axes(x,L2,R2,T,B,"bits","error (log)");[1e-6,1e-4,1e-2,1].forEach(function(m){ln(x,L2,Y2(m),R2,Y2(m),css("--line"),1);txt(x,ex(m),L2-4,Y2(m)+3,css("--dim"),9,"right")});
+  [1,4,8,12,16].forEach(function(v){txt(x,""+v,X2(v),B+14,css("--dim"),10,"center")});
+  var pts=[];for(var bb=1;bb<=16;bb++)pts.push(M4.hgMse(M4.compress(f.th,bb,p,f.mask).q,f.rows));
+  curve(x,16,function(i){return X2(i+1)},function(i){return Y2(pts[i])},css("--ok"),2);
+  dot(x,X2(b),Y2(pts[b-1]),5,css("--amber"));ln(x,L2,Y2(f.mse),R2,Y2(f.mse),css("--sky"),1,[4,4]);txt(x,"float32",R2,Y2(f.mse)-4,css("--sky"),9,"right");
+}
+function upd4b(){
+  var f=getFit(),b=V("b4b"),p=V("p4b"),c=M4.compress(f.th,b,p,f.mask),m=M4.hgMse(c.q,f.rows),full=c.total*4+8;
+  $("#r4b").textContent=c.kept+"/"+c.total+" numbers × "+b+" bits ≈ "+f0(c.bytes)+" bytes ("+f1(full/c.bytes)+"× smaller) · error "+ex(m);
+  $("#m4b").innerHTML="<p>Prune: set the smallest "+p+"% of |θ| to 0, keep a 1-bit mask per slot.</p><p>Quantize the rest to b bits over their range [θ_min, θ_max]:</p><p>θ̂ = θ_min + round((θ − θ_min)/(θ_max − θ_min) · (2ᵇ − 1)) / (2ᵇ − 1) · (θ_max − θ_min)</p><p>Rounding step = range / (2ᵇ − 1). Halve the bits and the step grows 2^(b/2)-fold.</p><p>Bytes ≈ kept × b/8 + mask + 8 (range) = "+c.kept+" × "+b+"/8 + "+(p>0?f0(c.total/8):"0")+" + 8 = <span class='hl'>"+f0(c.bytes)+"</span></p><p>Error "+ex(m)+" against "+ex(f.mse)+" at float32.</p><p class='okc'>The third tool on the slide, distillation, trains a small model to copy a big one. It changes the model, not the numbers.</p>";
+}
+
+/* ================= Day 4C: storage ================= */
+var bits4=32;
+function draw4c(){
+  var x=cx.c4c,N=V("N4c")*1e6,dg=V("dg4c"),lt=V("lt4c");bg(x);
+  var items=[["NeRF MLP",M4.nerfBytes(bits4)/1e6,css("--sky")],["Instant-NGP (16 levels)",M4.ngpBytes(lt,16,2,bits4)/1e6,css("--sky")],["3DGS, your settings",M4.gsBytes(N,dg,bits4).bytes/1e6,css("--amber")],["3DGS, degree 3 float32",M4.gsBytes(N,3,32).bytes/1e6,css("--line")]];
+  var L=190,R=610,T=40,B=300;function X(mbv){return L+(Math.log10(Math.max(mbv,0.01))+2)/6*(R-L)}
+  [0.01,0.1,1,10,100,1000,10000].forEach(function(v){ln(x,X(v),T-10,X(v),B,css("--line"),1);txt(x,v>=1000?(v/1000)+" GB":v+" MB",X(v),B+16,css("--dim"),9,"center")});
+  items.forEach(function(it,i){var y=T+i*60;txt(x,it[0],L-8,y+22,css("--fg"),11,"right");x.fillStyle=it[2];x.fillRect(L,y+8,Math.max(2,X(it[1])-L),26);txt(x,mb(it[1]),Math.min(X(it[1])+6,R-60),y+25,css("--fg"),11,"left")});
+  ln(x,X(50),T-14,X(50),B,css("--ok"),2,[5,4]);txt(x,"50 MB field download",X(50),T-18,css("--ok"),10,"center");
+  ln(x,X(2000),T-14,X(2000),B,css("--bad"),2,[5,4]);txt(x,"2 GB phone GPU",X(2000),B+30,css("--bad"),10,"center");
+}
+function upd4c(){
+  var N=V("N4c")*1e6,dg=V("dg4c"),lt=V("lt4c"),g=M4.gsBytes(N,dg,bits4);
+  $("#r4c").textContent="3DGS: "+g.floats+" numbers × "+bits4/8+" B × "+f1(N/1e6)+" M = "+mb(g.bytes/1e6)+" · Instant-NGP "+mb(M4.ngpBytes(lt,16,2,bits4)/1e6)+" · NeRF "+mb(M4.nerfBytes(bits4)/1e6);
+  $("#m4c").innerHTML="<h4>Gaussian splat</h4><p>position 3 + scale 3 + rotation (quaternion) 4 + opacity 1 + color 3·(deg + 1)²</p><p>deg "+dg+": 11 + 3·"+((dg+1)*(dg+1))+" = <span class='hl'>"+g.floats+" numbers</span>,  × "+bits4/8+" bytes × "+f1(N/1e6)+" M = "+mb(g.bytes/1e6)+"</p><h4>Instant-NGP</h4><p>16 levels × 2^"+lt+" slots × 2 features × "+bits4/8+" B + tiny MLP = "+mb(M4.ngpBytes(lt,16,2,bits4)/1e6)+"</p><h4>Classic NeRF</h4><p>8 layers × 256 wide ≈ 0.57 M weights × "+bits4/8+" B = "+mb(M4.nerfBytes(bits4)/1e6)+"</p><p class='okc'>NeRF is tiny on disk and slow to draw. Splats are big on disk and fast to draw. The time-per-frame concept shows the other half of this trade.</p>";
+}
+
+/* ================= Day 5A: frame budget ================= */
+function draw5a(){
+  var x=cx.c5a,hh=V("h5a"),sp=V("sp5a"),tf=V("tf5a"),F=M4.frameMs(Math.round(hh*16/9),hh,sp,tf,0.3);bg(x);
+  var items=[["classic NeRF",F.nerf],["Instant-NGP",F.ngp],["MobileNeRF",F.mob],["Gaussian splats",F.gs]];
+  var L=150,R=610,T=40,B=290;function X(ms){return L+(Math.log10(Math.max(ms,0.01))+2)/9*(R-L)}
+  [[0.01,"0.01 ms"],[1,"1 ms"],[100,"100 ms"],[1e4,"10 s"],[1e6,"17 min"]].forEach(function(v){ln(x,X(v[0]),T-10,X(v[0]),B,css("--line"),1);txt(x,v[1],X(v[0]),B+16,css("--dim"),9,"center")});
+  items.forEach(function(it,i){var y=T+i*60,ok=it[1]<=16.7;txt(x,it[0],L-8,y+22,css("--fg"),11,"right");x.fillStyle=ok?css("--ok"):css("--amber");x.fillRect(L,y+8,Math.max(2,X(it[1])-L),26);txt(x,msf(it[1]),Math.min(X(it[1])+6,R-60),y+25,css("--fg"),11,"left")});
+  ln(x,X(16.7),T-14,X(16.7),B,css("--ok"),2,[5,4]);txt(x,"60 fps",X(16.7),T-18,css("--ok"),10,"center");
+  ln(x,X(33.3),T-14,X(33.3),B,css("--sky"),1,[3,4]);txt(x,"30 fps",X(33.3)+4,B+30,css("--sky"),10,"left");
+}
+function upd5a(){
+  var hh=V("h5a"),w=Math.round(hh*16/9),sp=V("sp5a"),tf=V("tf5a"),F=M4.frameMs(w,hh,sp,tf,0.3);
+  $("#r5a").textContent=w+"×"+hh+" = "+f2(F.px/1e6)+" M pixels · NeRF "+msf(F.nerf)+" · NGP "+msf(F.ngp)+" · Mobile "+msf(F.mob)+" · splats "+msf(F.gs);
+  $("#m5a").innerHTML="<p>Time per frame = work / (peak speed × 0.3).  Budget at 60 fps = 1000/60 = <span class='hl'>16.7 ms</span>.</p><p>pixels P = "+w+" × "+hh+" = "+f2(F.px/1e6)+" M,  samples S = "+sp+",  chip "+f1(tf)+" TFLOPS</p><p>NeRF:  P × S × 1.05 MFLOP (8 × 256-wide layers) = "+ex(F.px*sp*1.05e6)+" FLOP → "+msf(F.nerf)+"</p><p>Instant-NGP:  P × S × 22 kFLOP (tiny MLP + lookups) → "+msf(F.ngp)+"</p><p>MobileNeRF:  P × 2.4 kFLOP (one tiny MLP per pixel) + triangles → "+msf(F.mob)+"</p><p>Splats:  P × ~30 splats × 60 FLOP + 1 M splats × 300 (projection) → "+msf(F.gs)+"</p><p class='okc'>Rough counts, but the ratios are the lesson: the cost is set by how many times you ask a network per pixel.</p>";
+}
+
+/* ================= Day 5B: view-dependent color ================= */
+function draw5b(){
+  var x=cx.c5b,K=V("K5b"),s=V("s5b"),r=M4.vdFit(K,s);bg(x);
+  var L=50,R=610,T=36,B=310;function X(i){return L+i/(M4.VD_N-1)*(R-L)}function Y(v){return B-(v+0.1)/0.8*(B-T)}
+  axes(x,L,R,T,B,"viewing angle (0° to 180°)","brightness");[0,45,90,135,180].forEach(function(v){txt(x,""+v,L+v/180*(R-L),B+14,css("--dim"),10,"center")});
+  ln(x,L,Y(0),R,Y(0),css("--line"),1);
+  curve(x,M4.VD_N,X,function(i){return Y(r.Y[i])},css("--sky"),2.5);
+  curve(x,M4.VD_N,X,function(i){return Y(r.pred[i])},css("--amber"),2);
+  txt(x,"blue: waxy leaf (Phong, sun 40°) · amber: "+r.m+" numbers per channel",R,12,css("--dim"),10,"right");
+}
+function upd5b(){
+  var K=V("K5b"),s=V("s5b"),r=M4.vdFit(K,s);
+  $("#r5b").textContent="peak "+f2(r.peakFit)+" (true "+f2(r.peak)+") · RMS error "+f3(r.rmse)+" · "+r.m+" numbers/channel (3D: "+(K+1)*(K+1)+")";
+  $("#m5b").innerHTML="<p>Color along view angle t:  c(t) ≈ a₀ + Σₖ₌₁ᴷ (aₖ cos kt + bₖ sin kt)</p><p>Fit by least squares on 181 views → "+r.m+" numbers per color channel.</p><p>In 3D the view direction lives on a sphere, so the basis is spherical harmonics: (deg + 1)² numbers per channel. 3DGS uses degree 3: 16 × 3 = 48 of its 59 numbers.</p><p>Highlight width ≈ "+f1(M4.phongHalf(s))+"°. A wave of order k has features about 180°/k wide, so you need roughly k ≳ 180 / width.</p><p>K = "+K+":  peak <span class='hl'>"+f2(r.peakFit)+"</span> of "+f2(r.peak)+",  RMS "+f3(r.rmse)+"</p><p class='okc'>Low orders blur highlights into a glow. That is often fine for leaves and wrong for wet or waxy ones.</p>";
+}
+
+/* ================= Day 5C: early termination ================= */
+function draw5c(){
+  var x=cx.c5c,n=V("n5c"),a=V("a5c"),st=$("#st5c").checked,al=M4.splats(n,a,1),c=M4.composite(al,st),c2=M4.composite(al,false);bg(x);
+  var L=50,R=610,T=24,B=140;function X(i){return L+(i+0.5)/n*(R-L)}
+  axes(x,L,R,T,B,"","opacity α");txt(x,"splat index, front to back",R,B+14,css("--dim"),10,"right");
+  var bw=Math.max(1,(R-L)/n-1);al.forEach(function(v,i){x.fillStyle=i<c.cnt?css("--amber"):css("--line");x.fillRect(X(i)-bw/2,B-v*(B-T),bw,v*(B-T))});
+  var T2=180,B2=330;function Y2(t){return T2+(-Math.log10(Math.max(t,1e-12)))/12*(B2-T2)}
+  axes(x,L,R,T2,B2,"","T left (log)");[1,1e-3,1e-6,1e-9,1e-12].forEach(function(t){ln(x,L,Y2(t),R,Y2(t),css("--line"),1);txt(x,ex(t),L-4,Y2(t)+3,css("--dim"),9,"right")});
+  curve(x,c2.Ts.length,function(i){return L+i/n*(R-L)},function(i){return Y2(c2.Ts[i])},css("--line"),1.5,[4,4]);
+  curve(x,c.Ts.length,function(i){return L+i/n*(R-L)},function(i){return Y2(c.Ts[i])},css("--amber"),2.5);
+  ln(x,L,Y2(1/255),R,Y2(1/255),css("--ok"),1.5,[5,4]);txt(x,"1/255",R,Y2(1/255)-4,css("--ok"),10,"right");
+  if(st)ln(x,L+c.cnt/n*(R-L),T2,L+c.cnt/n*(R-L),B2,css("--ok"),1);
+}
+function upd5c(){
+  var n=V("n5c"),a=V("a5c"),st=$("#st5c").checked,al=M4.splats(n,a,1),c=M4.composite(al,st),th=Math.log(255)/-Math.log(1-a);
+  $("#r5c").textContent="blended "+c.cnt+" of "+n+" splats · T left "+ex(c.T)+" · skipped "+f0(100*(1-c.cnt/n))+"% · rule of thumb "+f1(th);
+  $("#m5c").innerHTML="<p>Front-to-back blending:  C = Σᵢ Tᵢ αᵢ cᵢ,   Tᵢ₊₁ = Tᵢ (1 − αᵢ),  T₁ = 1</p><p>Anything behind splat i can add at most Tᵢ to the pixel.</p><p>An 8-bit pixel has steps of 1/255, so once T &lt; 1/255 ≈ 0.0039 the rest is invisible: stop.</p><p>With every α equal:  (1 − α)ⁿ &lt; 1/255  →  n &gt; ln 255 / ln(1/(1 − α))</p><p>α = "+f2(a)+":  n &gt; 5.54 / "+f3(-Math.log(1-a))+" = <span class='hl'>"+f1(th)+"</span>  (here the α vary ±50%, so the count wanders a little)</p><p class='okc'>Dense canopies stop early. Thin, see-through foliage makes every pixel blend many splats, which is slow.</p>";
+}
+
+/* ================= Day 6A: AR occlusion ================= */
+function draw6a(){
+  var x=cx.c6a,zv=V("z6a"),sd=V("sd6a"),bl=V("bl6a"),r=M4.arOcc(zv,sd,bl,1);bg(x);
+  var L=20,R=620,T=24,B=230;function X(i){return L+i/M4.AR_N*(R-L)}function Y(z){return T+(z-1.5)/3*(B-T)}
+  txt(x,"near (1.5 m)",L,T-8,css("--dim"),10);txt(x,"far (4.5 m)",L,B+14,css("--dim"),10);
+  curve(x,M4.AR_N,X,function(i){return Y(r.D[i])},css("--sky"),2.5);
+  for(var i=0;i<M4.AR_N;i+=2)dot(x,X(i),Y(r.est[i]),1.6,css("--amber"));
+  ln(x,X(40),Y(zv),X(160),Y(zv),css("--ok"),3);txt(x,"virtual tag",X(160)+6,Y(zv)+4,css("--ok"),10);
+  var y0=262;txt(x,"what the app draws",L,y0-6,css("--dim"),10);
+  for(i=0;i<M4.AR_N;i++){var inTag=i>=40&&i<160,c=css("--panel");if(inTag){var t=zv<r.D[i],e=zv<r.est[i];c=t!==e?css("--bad"):(e?css("--ok"):css("--line"))}else c=r.D[i]<3.5?css("--line"):css("--panel");x.fillStyle=c;x.fillRect(X(i),y0,(R-L)/M4.AR_N+0.5,34)}
+  txt(x,"green: tag shown · gray: plant in front · red: wrong",L,y0+52,css("--dim"),10);
+}
+function upd6a(){
+  var zv=V("z6a"),sd=V("sd6a"),bl=V("bl6a"),r=M4.arOcc(zv,sd,bl,1);
+  $("#r6a").textContent="wrong pixels "+r.wrong+" of "+r.tot+" ("+f1(100*r.wrong/r.tot)+"%)";
+  $("#m6a").innerHTML="<p>Per pixel:  draw the tag if z_tag &lt; ẑ_scene, else draw the plant.</p><p>ẑ_scene = blur(z_true, "+bl+" px) + noise, σ = "+f2(sd)+" m</p><p>A pixel is wrong when the noise carries ẑ across z_tag:</p><p>P(wrong) = Φ(−|z_true − z_tag| / σ)</p><p>Example: leaf at 2.40 m, tag at 2.30 m, σ = 0.15 m → Φ(−0.67) ≈ 0.25</p><p>Here: <span class='hl'>"+r.wrong+" of "+r.tot+"</span> tag pixels wrong.</p><p class='okc'>Errors gather where the tag passes close to a surface and along depth edges, where blur mixes near and far.</p>";
+}
+
+/* ================= Day 6B: wind ================= */
+function draw6b(){
+  var x=cx.c6b,A=V("A6b"),N=V("N6b"),w=V("w6b"),r=M4.wind(A,N,w,2);bg(x);
+  var L=40,R=610,T=40,B=320;function X(i){return L+i/M4.WN*(R-L)}function Y(v){return B-(v+0.05)/1.15*(B-T)}
+  axes(x,L,R,T,B,"position along the leaf's swing","leaf density");
+  r.frames.forEach(function(f){curve(x,M4.WN,X,function(i){return Y(f[i])},css("--line"),1)});
+  curve(x,M4.WN,X,function(i){return Y(r.tru[i])},css("--sky"),1.5,[5,4]);
+  curve(x,M4.WN,X,function(i){return Y(r.stat[i])},css("--amber"),3);
+  curve(x,M4.WN,X,function(i){return Y(r.al[i])},css("--ok"),2.5);
+  txt(x,"gray: frames · amber: static · green: aligned (deformable) · blue dashed: frame 1",R,12,css("--dim"),10,"right");
+}
+function upd6b(){
+  var A=V("A6b"),N=V("N6b"),w=V("w6b"),r=M4.wind(A,N,w,2);
+  $("#r6b").textContent="peak: static "+f2(r.ws.pk)+", aligned "+f2(r.wa.pk)+" · width: static "+f3(r.ws.fw)+", aligned "+f3(r.wa.fw)+", true "+f3(r.wt.fw);
+  $("#m6b").innerHTML="<p>Frame j sees the leaf at  x₀ + sⱼ,  sⱼ = A·sin(2πj/N + noise)</p><p>Static model: one density for all frames. Least squares gives the mean:  σ̄(x) = (1/N) Σⱼ σⱼ(x)</p><p>Deformable model: σⱼ(x) = σ_canon(x − dⱼ). Find dⱼ by sliding frame j until it best matches frame 1:</p><p>dⱼ = argmax_d Σₓ σⱼ(x + d) · σ₁(x)</p><p>Then average the aligned frames.</p><p>Static peak <span class='hl'>"+f2(r.ws.pk)+"</span>, aligned peak <span class='hl'>"+f2(r.wa.pk)+"</span>.</p><p class='okc'>Nerfies learns dⱼ as a neural warp field instead of one shift, and it is trained jointly with the canonical leaf.</p>";
+}
+
+/* ================= Day 6C: NDVI ================= */
+function draw6c(){
+  var x=cx.c6c,S=V("S6c"),o=V("o6c"),q=V("q6c"),r=M4.ndviStrip(S,o,q);bg(x);
+  var L=50,R=610,T=30,B=230;function X(i){return L+(i+0.5)/M4.NS*(R-L)}function Y(v){return B-(v-0.3)/0.7*(B-T)}
+  axes(x,L,R,T,B,"pixel along the row","NDVI");[0.4,0.6,0.8,1].forEach(function(v){ln(x,L,Y(v),R,Y(v),css("--line"),1);txt(x,f1(v),L-6,Y(v)+3,css("--dim"),10,"right")});
+  curve(x,M4.NS,X,function(i){return Y(r[i].alb)},css("--ok"),3);
+  curve(x,M4.NS,X,function(i){return Y(M4.clamp(r[i].raw,0.3,1))},css("--amber"),2.5);
+  var T2=262,B2=330;txt(x,"light on the leaf (shade in the middle)",L,T2-6,css("--dim"),10);
+  curve(x,M4.NS,X,function(i){return B2-r[i].s*(B2-T2)},css("--sky"),2);ln(x,L,B2,R,B2,css("--line"),1);
+  txt(x,"green: from albedo · amber: from raw pixels",R,T-10,css("--dim"),10,"right");
+}
+function upd6c(){
+  var S=V("S6c"),o=V("o6c"),q=V("q6c"),r=M4.ndviStrip(S,o,q),sun=r[5],sh=r[60];
+  $("#r6c").textContent="raw NDVI: sun "+f3(sun.raw)+", shade "+f3(sh.raw)+" · from albedo: "+f3(sh.alb)+" everywhere";
+  $("#m6c").innerHTML="<p>NDVI = (NIR − R) / (NIR + R).  Leaf: ρ_R = 0.05, ρ_NIR = 0.45 → (0.40)/(0.50) = <span class='hl'>0.800</span></p><p>Raw pixel per band:  d = ρ · s · E_band + haze_band</p><p>Plain shade (s only) cancels in the ratio:  (0.45s − 0.05s)/(0.45s + 0.05s) = 0.8</p><p>Haze does not: in shade, s = "+f2(sh.s)+":</p><p>d_R = 0.05 × "+f2(sh.s)+" + "+f3(o)+" = "+f3(sh.dR)+",  d_NIR = 0.45 × "+f2(sh.s)+" × "+f2(1+(q-1)*sh.f)+" + "+f3(0.3*o)+" = "+f3(sh.dN)+"</p><p>raw NDVI = <span class='hl'>"+f3(sh.raw)+"</span></p><p>From albedo (albedo split, haze removed, light per band divided out): ρ̂ = (d − haze) / (s·E)  → 0.800</p><p class='okc'>Shade light under a canopy is NIR-rich because leaves transmit NIR. Raise 'shade NIR/red' to see raw NDVI go up in shade with no change in the plant.</p>";
+}
+
+
+/* ================= new concepts ================= */
+var B=M4B;
+/* 01 · materials */
+var mat01="emerald";
+function rgb(c){return "rgb("+Math.round(255*c[0])+","+Math.round(255*c[1])+","+Math.round(255*c[2])+")"}
+function sphere(x,ox,oy,size,N,mat,az,el){var s=B.shadeSphere(mat,az,el,N),c=size/N;for(var j=0;j<N;j++)for(var i=0;i<N;i++){var p=s.img[j*N+i];if(!p)continue;x.fillStyle=rgb(p);x.fillRect(ox+i*c,oy+j*c,c+0.6,c+0.6)}return s}
+function draw01(){var x=cx.n01,az=V("az01"),el=V("el01");x.fillStyle="#050608";x.fillRect(0,0,W,H);
+  var s=sphere(x,20,30,300,100,mat01,az,el);txt(x,mat01,170,348,"#e9edf5",13,"center");
+  var names=Object.keys(B.MATS);names.forEach(function(n,k){var gx=350+(k%4)*70,gy=60+Math.floor(k/4)*130;sphere(x,gx,gy,58,30,n,az,el);txt(x,n,gx+29,gy+76,n===mat01?"#ffb454":"#98a2b6",9,"center");if(n===mat01)ring(x,gx+29,gy+29,33,"#ffb454",2)});
+  txt(x,"same sphere, same light, eight materials",350,30,"#98a2b6",10)}
+function upd01(){var m=B.MATS[mat01],s=B.shadeSphere(mat01,V("az01"),V("el01"),48);
+  $("#r01").textContent=mat01+": diffuse "+m.d.map(f2).join("/")+" · specular "+m.s.map(f2).join("/")+" · shininess "+f1(s.shin);
+  $("#m01").innerHTML="<p>Per pixel (Phong with ambient):  c = k_a + k_d·max(0, n·l) + k_s·max(0, r·v)^(128·n)</p><p>Each of k_a, k_d, k_s is an RGB triple. "+mat01+":</p><p>k_a = ("+m.a.map(f3).join(", ")+")</p><p>k_d = ("+m.d.map(f3).join(", ")+")</p><p>k_s = ("+m.s.map(f3).join(", ")+"),  shininess = 128 × "+m.n+" = <span class='hl'>"+f1(s.shin)+"</span></p><p>Normal on a unit sphere at pixel (x, y):  n = (x, y, √(1 − x² − y²))</p><p class='okc'>10 numbers per material. Metals (gold, bronze) tint the highlight with their own color; plastics keep it white-ish.</p>"}
+
+/* 05 · learned reflectance */
+var seed05=3;
+function draw05(){var x=cx.n05,nv=V("nv05"),s=V("s05"),sd=V("sd05"),r=B.learnBRDF(nv,s,sd,seed05);bg(x);
+  var L=50,R=610,T=44,Bt=310;function X(t){return L+t/180*(R-L)}function Y(v){return Bt-(v+0.1)/0.9*(Bt-T)}
+  axes(x,L,R,T,Bt,"viewing angle (°)","brightness");[0,45,90,135,180].forEach(function(v){txt(x,""+v,X(v),Bt+14,css("--dim"),10,"center")});
+  x.globalAlpha=.12;x.fillStyle=css("--amber");var hw=M4.phongHalf(s);x.fillRect(X(140-hw),T,X(140+hw)-X(140-hw),Bt-T);x.globalAlpha=1;
+  curve(x,181,function(i){return X(i)},function(i){return Y(r.tru[i])},css("--sky"),2.5);
+  curve(x,181,function(i){return X(i)},function(i){return Y(M4.clamp(r.pred[i],-0.1,0.8))},css("--amber"),2);
+  r.obs.forEach(function(o){dot(x,X(o[0]),Y(o[1]),4,css("--fg"))});
+  txt(x,"blue: true leaf · amber: learned from the white dots (camera views) · shaded: the highlight",L,16,css("--dim"),10)}
+function upd05(){var nv=V("nv05"),s=V("s05"),sd=V("sd05"),r=B.learnBRDF(nv,s,sd,seed05),ae=0,ap=0;for(var k=1;k<=20;k++){var q=B.learnBRDF(nv,s,sd,k);ae+=q.rmse/20;ap+=q.pkp/20}
+  $("#r05").textContent="this setup: "+r.near+" views inside the highlight · peak "+f2(r.pkp)+" (true "+f2(r.pk)+") · error "+f3(r.rmse)+" · 20 setups: peak "+f2(ap)+", error "+f3(ae);
+  $("#m05").innerHTML="<p>Learned model:  f(θ) = w₀ + Σ wⱼ · max(0, cos(θ − θ_mirror))^sⱼ,  sⱼ ∈ {"+B.LOBES.join(", ")+"}</p><p>The weights w are fit to the observed views by least squares:  w = argmin Σ (f(θᵢ) − Iᵢ)²</p><p>That is what a neural BRDF does, with a network instead of 5 lobes.</p><p>The highlight is "+f1(2*M4.phongHalf(s))+"° wide out of 170°, so a random view lands in it with probability ≈ "+f2(2*M4.phongHalf(s)/170)+". With "+nv+" views you expect "+f1(nv*2*M4.phongHalf(s)/170)+" inside.</p><p class='okc'>No view near the highlight means no information about it. Practical systems need many views and long training (slide 8).</p>"}
+
+/* 11 · material editing */
+var sh11={};
+function shade11(th){if(!sh11[th]){sh11={};sh11[th]=M4.hfShade(th,0.2)}return sh11[th]}
+function edit11(i,p,th,yel,br,gl,edited){var plant=p.h>0.25;var a=plant?(edited?[(0.10+0.30*yel)*br,(0.30+0.06*yel)*br,0.08*br]:[0.10,0.30,0.08]):[0.30,0.24,0.18];
+  var sp=0;if(plant&&edited&&gl>0&&p.v){var e=1e-3,dh=(M4.hf(p.x+e)-M4.hf(p.x-e))/(2*e),nn=Math.sqrt(dh*dh+1),n=[-dh/nn,1/nn],l=[Math.cos(th*D2R),Math.sin(th*D2R)],d=n[0]*l[0]+n[1]*l[1],rr=[2*d*n[0]-l[0],2*d*n[1]-l[1]];sp=gl*0.5*Math.pow(Math.max(0,rr[1]),20)}
+  return [a[0]*p.sh+sp,a[1]*p.sh+sp,a[2]*p.sh+sp]}
+function draw11(){var x=cx.n11,th=V("th11"),yel=V("y11"),br=V("b11"),gl=V("g11"),S=shade11(th);bg(x);
+  var L=20,sc=200,gy=150;function X(v){return L+v*sc}function Y(h){return gy-h*100}
+  x.beginPath();x.moveTo(X(0),gy+10);S.forEach(function(p){x.lineTo(X(p.x),Y(p.h))});x.lineTo(X(M4.RX),gy+10);x.closePath();x.fillStyle=css("--panel");x.fill();
+  var la=[Math.min(1,(0.10+0.30*yel)*br*2.6),Math.min(1,(0.30+0.06*yel)*br*2.6),Math.min(1,0.08*br*2.6)];for(var i=1;i<S.length;i++){var p=S[i],q=S[i-1];ln(x,X(q.x),Y(q.h),X(p.x),Y(p.h),p.h>0.25?rgb(la):css("--line"),3)}
+  var sx=320+260*Math.cos(th*D2R),sy=gy-130*Math.sin(th*D2R);dot(x,sx,Math.max(sy,12),9,css("--amber"));
+  function strip2(y,ed,lbl){txt(x,lbl,20,y-4,css("--dim"),10);var w=600/S.length;S.forEach(function(p,k){var c=edit11(k,p,th,yel,br,gl,ed);x.fillStyle=rgb(c.map(function(v){return M4.clamp(v*2.6,0,1)}));x.fillRect(20+k*w,y,w+0.5,40)})}
+  strip2(210,false,"original material");strip2(290,true,"edited material, same light and shadows")}
+function upd11(){var th=V("th11"),S=shade11(th),sh=0,sp=0;S.forEach(function(p,k){if(p.h>0.25&&!p.v)sh++;var a=edit11(k,p,th,V("y11"),V("b11"),V("g11"),true),b=edit11(k,p,th,V("y11"),V("b11"),0,true);if(a[0]-b[0]>0.01)sp++});
+  $("#r11").textContent="shadowed leaf pixels: "+sh+" before and after · pixels with new gloss: "+sp;
+  $("#m11").innerHTML="<p>Factored scene:  I(x) = A(x) · S(x) + specular(x)</p><p>Material edit: replace A (and the specular weight) for leaf pixels only:</p><p>A_leaf = brightness × ((0.10, 0.30, 0.08) + yellowing × (0.30, 0.06, 0))</p><p>specular = gloss × 0.5 × max(0, r·v)²⁰ × V_sun,  camera looking straight down</p><p>S(x), the normals and the visibility are reused unchanged, so the "+sh+" shadowed leaf pixels stay shadowed.</p><p class='okc'>Relighting edits S. Material editing edits A and the BRDF. NeRFactor allows both because it keeps them apart.</p>"}
+
+/* 17 · distillation */
+function draw17(){var x=cx.n17,d=B.distill(V("ns17"),V("sd17"),V("K17"),5);bg(x);
+  var L=40,R=610,Tp=30,Bt=320;function X(v){return L+v*(R-L)}function Y(v){return Bt-(v+0.1)/1.3*(Bt-Tp)}
+  axes(x,L,R,Tp,Bt,"position x","");
+  curve(x,301,function(i){return X(i/300)},function(i){return Y(M4.target(i/300))},css("--sky"),3);
+  curve(x,256,function(i){return X((i+0.5)/256)},function(i){return Y(M4.clamp(d.pa[i],-0.1,1.2))},css("--amber"),2);
+  curve(x,256,function(i){return X((i+0.5)/256)},function(i){return Y(M4.clamp(d.pb[i],-0.1,1.2))},css("--ok"),2,[6,3]);
+  d.pts.forEach(function(p){dot(x,X(p[0]),Y(p[1]),3,css("--fg"))});
+  txt(x,"blue: truth ≈ teacher · amber: student from samples · green: student from teacher",L,16,css("--dim"),10)}
+function upd17(){var d=B.distill(V("ns17"),V("sd17"),V("K17"),5);
+  $("#r17").textContent="teacher "+d.tN+" numbers, error "+ex(d.et)+" · student "+d.sN+" numbers: from samples "+ex(d.ea)+", from teacher "+ex(d.eb);
+  $("#m17").innerHTML="<p>Student:  s(x) = c₀ + Σₖ cₖ · exp(−½ ((x − μₖ)/w)²),  K = "+V("K17")+" bumps, "+d.sN+" numbers</p><p>Plain training:  min Σᵢ (s(xᵢ) − yᵢ)²  over "+V("ns17")+" noisy samples</p><p>Distillation:  min Σⱼ (s(xⱼ) − teacher(xⱼ))²  over 256 points the teacher is asked about</p><p>Error against the truth: <span class='hl'>"+ex(d.ea)+"</span> plain, <span class='hl'>"+ex(d.eb)+"</span> distilled</p><p class='okc'>The teacher gives clean labels anywhere you ask, so the student never has to chase noise. Its error floor is set by its own size.</p>"}
+
+/* 20 · MobileNeRF */
+function draw20(){var x=cx.n20,vd=V("v20"),m=B.mobRender(vd),pw=2.9,ph=2.6;bg(x);
+  var P=[[14,24],[330,24],[14,200],[330,200]],lb=["(a) triangle mesh","(b) feature texture","(c) rasterized features","(d) tiny network → color"];
+  P.forEach(function(o,k){txt(x,lb[k],o[0],o[1]-8,css("--dim"),10)});
+  var o=P[0];m.P.forEach(function(p){x.beginPath();p.forEach(function(q,i){var px=o[0]+q[0]*pw,py=o[1]+q[1]*ph;if(i===0)x.moveTo(px,py);else x.lineTo(px,py)});x.closePath();x.strokeStyle=css("--sky");x.lineWidth=1;x.stroke();
+    x.beginPath();x.moveTo(o[0]+p[0][0]*pw,o[1]+p[0][1]*ph);x.lineTo(o[0]+p[2][0]*pw,o[1]+p[2][1]*ph);x.stroke()});
+  o=P[1];for(var j=0;j<30;j++)for(var i=0;i<48;i++){var u=i/48,v=j/30,g=0.5+0.5*Math.sin(20*u+13*v);x.fillStyle="rgb("+Math.round(60+120*g)+","+Math.round(90+120*Math.sin(9*u+3*v)*0.5+60)+","+Math.round(160*g)+")";x.fillRect(o[0]+i*5.8,o[1]+j*5.2,6,5.4)}
+  for(var yy=0;yy<B.MH;yy++)for(var xx=0;xx<B.MW;xx++){var k2=yy*B.MW+xx,f=m.feat[k2],c=m.col[k2];if(!f)continue;
+    x.fillStyle="rgb("+Math.round(255*f[3])+","+Math.round(255*f[1])+","+Math.round(255*f[0])+")";x.fillRect(P[2][0]+xx*pw,P[2][1]+yy*ph,pw+0.4,ph+0.4);
+    x.fillStyle=rgb(c);x.fillRect(P[3][0]+xx*pw,P[3][1]+yy*ph,pw+0.4,ph+0.4)}}
+function upd20(){var m=B.mobRender(V("v20")),S=V("s20"),px=B.MW*B.MH,nr=px*S;
+  $("#r20").textContent="tiny-network calls: "+m.cov+" (covered pixels) · NeRF calls: "+px+" × "+S+" = "+nr.toLocaleString()+" · "+f0(nr/m.cov)+"× fewer";
+  $("#m20").innerHTML="<p>(a)→(c) is ordinary rasterization (Lecture 1): for each pixel, which triangle covers it? Phones have hardware for this.</p><p>Each triangle stores a texture of 8 features (here 4). (c) holds the interpolated features f per pixel.</p><p>(d) color = MLP(f, view direction), one call per covered pixel.</p><p>Calls per frame:  MobileNeRF "+m.cov+"   vs   NeRF "+px+" pixels × "+S+" samples = <span class='hl'>"+nr.toLocaleString()+"</span></p><p class='okc'>A hybrid: classical triangles for speed, a learned network for appearance. The cost is a mesh that must be baked from the NeRF first.</p>"}
+
+/* 21 · frontier */
+function draw21(){var x=cx.n21,bud=V("bud21"),F=B.frontier();bg(x);
+  var L=60,R=610,T=30,Bt=310;function X(b){return L+(b-20)/260*(R-L)}function Y(p){return Bt-(p-15)/42*(Bt-T)}
+  axes(x,L,R,T,Bt,"stored size (bytes)","quality PSNR (dB)");[50,100,150,200,250].forEach(function(v){txt(x,""+v,X(v),Bt+14,css("--dim"),10,"center")});[20,30,40,50].forEach(function(v){ln(x,L,Y(v),R,Y(v),css("--line"),1);txt(x,""+v,L-6,Y(v)+3,css("--dim"),10,"right")});
+  F.forEach(function(a){if(!a.front)dot(x,X(a.bytes),Y(a.psnr),2.5,css("--line"))});
+  var fr=F.filter(function(a){return a.front}).sort(function(a,b){return a.bytes-b.bytes});x.beginPath();fr.forEach(function(a,i){if(i===0)x.moveTo(X(a.bytes),Y(a.psnr));else x.lineTo(X(a.bytes),Y(a.psnr))});x.strokeStyle=css("--ok");x.lineWidth=1.5;x.stroke();fr.forEach(function(a){dot(x,X(a.bytes),Y(a.psnr),3.5,css("--ok"))});
+  ln(x,X(bud),T,X(bud),Bt,css("--amber"),2,[5,4]);txt(x,"budget",X(bud)+4,T+10,css("--amber"),10);
+  var best=best21();if(best)ring(x,X(best.bytes),Y(best.psnr),7,css("--amber"),2.5)}
+function best21(){var bud=V("bud21"),b=null;B.frontier().forEach(function(a){if(a.bytes<=bud&&(!b||a.psnr>b.psnr))b=a});return b}
+function upd21(){var b=best21(),F=B.frontier();
+  $("#r21").textContent=b?"best under budget: "+b.b+" bits, "+b.p+"% pruned · "+b.bytes+" B · "+f1(b.psnr)+" dB":"nothing fits: raise the budget";
+  $("#m21").innerHTML="<p>Each dot: one (bits, prune) setting of the 5-level hash grid. "+F.length+" settings.</p><p>PSNR = 10 · log₁₀(1 / MSE)  (signal range 1)</p><p>A setting is on the frontier (Pareto optimal) if no other setting is both smaller and at least as good.</p><p>"+(b?"Budget "+V("bud21")+" B → <span class='hl'>"+b.b+" bits, "+b.p+"% pruned, "+f1(b.psnr)+" dB</span>":"")+"</p><p class='okc'>Edge deployment is choosing a point on this curve for the device. Every dot below the curve is a setting you should never ship.</p>"}
+
+/* 22 · PSNR vs SSIM */
+var cmp22="noise",ref22=null;
+function corr22(){if(!ref22)ref22=B.refImg();var a=V("amt22"),amt=cmp22==="noise"?a*0.1:cmp22==="blur"?a*6:a*0.2;return {img:B.corrupt(ref22,cmp22,amt,1),amt:amt}}
+function img22(x,im,ox,oy,s){for(var j=0;j<B.IS;j++)for(var i=0;i<B.IS;i++){var g=Math.round(255*im[j*B.IS+i]);x.fillStyle="rgb("+Math.round(g*0.55)+","+g+","+Math.round(g*0.45)+")";x.fillRect(ox+i*s,oy+j*s,s+0.4,s+0.4)}}
+function draw22(){var x=cx.n22,c=corr22();bg(x);img22(x,ref22,40,40,4.2);img22(x,c.img,340,40,4.2);txt(x,"reference",40,32,css("--dim"),11);txt(x,cmp22==="noise"?"noise σ = "+f3(c.amt):cmp22==="blur"?"blur radius "+Math.round(c.amt)+" px":"brighter by "+f2(c.amt),340,32,css("--dim"),11);
+  var p=B.psnr(ref22,c.img),s=B.ssim(ref22,c.img);txt(x,"PSNR "+(p.db>90?"∞":f1(p.db)+" dB")+"   SSIM "+f3(s),340,340,css("--amber"),13)}
+function upd22(){var c=corr22(),p=B.psnr(ref22,c.img),s=B.ssim(ref22,c.img);
+  $("#r22").textContent="MSE "+ex(p.mse)+" · PSNR "+(p.db>90?"∞":f1(p.db)+" dB")+" · SSIM "+f3(s);
+  $("#m22").innerHTML="<p>MSE = (1/N) Σ (a − b)²,   PSNR = 10 · log₁₀(1 / MSE) dB</p><p>Now: MSE "+ex(p.mse)+" → <span class='hl'>"+(p.db>90?"∞":f1(p.db)+" dB")+"</span>. Every 10 dB is 10× less squared error.</p><p>SSIM over 8×8 windows:</p><p>SSIM = (2μₐμ_b + C₁)(2σ_ab + C₂) / ((μₐ² + μ_b² + C₁)(σₐ² + σ_b² + C₂)),  C₁ = 0.01², C₂ = 0.03²</p><p>Now: <span class='hl'>"+f3(s)+"</span> (1 = identical structure)</p><p class='okc'>LPIPS, the third common metric, compares deep-network features and tracks human judgment better still. Benchmarks also report fps and size.</p>"}
+
+/* 24 · latency */
+function draw24(){var x=cx.n24,o=V("o24"),t=V("t24"),F=M4.frameMs(1920,1080,64,t,0.3),w=V("w24");bg(x);
+  var L=60,R=610,T=30,Bt=310;function X(v){return L+v/300*(R-L)}function Y(px){return Bt-(Math.log10(Math.max(px,0.1))+1)/7*(Bt-T)}
+  axes(x,L,R,T,Bt,"turn speed (°/s)","image lag (px, log)");[0,100,200,300].forEach(function(v){txt(x,""+v,X(v),Bt+14,css("--dim"),10,"center")});[1,10,100,1e3,1e4,1e5].forEach(function(v){ln(x,L,Y(v),R,Y(v),css("--line"),1);txt(x,v>=1e3?(v/1e3)+"k":""+v,L-6,Y(v)+3,css("--dim"),10,"right")});
+  [["splats",F.gs,css("--ok")],["MobileNeRF",F.mob,css("--sky")],["Instant-NGP",F.ngp,css("--amber")],["NeRF",F.nerf,css("--bad")]].forEach(function(m,k){curve(x,61,function(i){return X(i*5)},function(i){return Y(B.lagPx(i*5,m[1]+o,1920,90).px)},m[2],2);txt(x,m[0],R-4,Y(B.lagPx(300,m[1]+o,1920,90).px)+(k===0?14:-5),m[2],10,"right")});
+  curve(x,61,function(i){return X(i*5)},function(i){return Y(B.lagPx(i*5,20,1920,90).px)},css("--fg"),1,[4,4]);txt(x,"20 ms target",X(40),Y(B.lagPx(40,20,1920,90).px)-6,css("--fg"),10);
+  ln(x,X(w),T,X(w),Bt,css("--dim"),1,[2,3])}
+function upd24(){var o=V("o24"),t=V("t24"),w=V("w24"),F=M4.frameMs(1920,1080,64,t,0.3),g=B.lagPx(w,F.gs+o,1920,90),n=B.lagPx(w,F.ngp+o,1920,90);
+  $("#r24").textContent="splats: "+msf(F.gs+o)+" → "+f1(g.px)+" px behind · Instant-NGP: "+msf(F.ngp+o)+" → "+f0(n.px)+" px";
+  $("#m24").innerHTML="<p>Motion-to-photon latency = render time + display and tracking = t</p><p>Angle turned meanwhile:  Δθ = ω · t</p><p>Screen pixels per degree: 1920 px / 90° = 21.3</p><p>Lag in pixels = ω · t · 21.3</p><p>Splats: "+f0(w)+" °/s × "+f1(F.gs+o)+" ms = "+f2(g.deg)+"° = <span class='hl'>"+f1(g.px)+" px</span></p><p class='okc'>Games and VR also predict the head pose a few ms ahead to hide what latency is left, but the renderer must already be fast.</p>"}
+
+/* 25 · slicing */
+var img25=null;
+function draw25(){var x=cx.n25,y=V("y25"),thr=V("thr25");bg(x);var N=120,s=300/N;
+  if(!img25){img25=[];for(var j=0;j<N;j++)for(var i=0;i<N;i++)img25.push(B.stalkD(-15+30*(i+0.5)/N,15-30*(j+0.5)/N))}
+  for(var j=0;j<N;j++)for(var i=0;i<N;i++){var d=img25[j*N+i],g=Math.round(30+215*d);x.fillStyle="rgb("+Math.round(g*0.9)+","+Math.round(g*0.85)+","+Math.round(g*0.55)+")";x.fillRect(20+i*s,30+j*s,s+0.4,s+0.4)}
+  var py=30+(15-y)/30*300;ln(x,20,py,320,py,css("--amber"),2);txt(x,"30 mm × 30 mm cross-section",20,20,css("--dim"),10);
+  var L=350,R=620,T=40,Bt=300;function X(v){return L+(v+15)/30*(R-L)}function Y(v){return Bt-v*(Bt-T)}
+  axes(x,L,R,T,Bt,"position (mm)","density");[-10,0,10].forEach(function(v){txt(x,""+v,X(v),Bt+14,css("--dim"),10,"center")});
+  var p=B.sliceProf(y,400);curve(x,p.length,function(i){return X(p[i][0])},function(i){return Y(p[i][1])},css("--sky"),2);
+  ln(x,L,Y(thr),R,Y(thr),css("--amber"),1,[4,4]);var pr=B.sliceProf(y,1200),q;for(var k=1;k<pr.length;k++)if((pr[k-1][1]>=thr)!==(pr[k][1]>=thr)){q=pr[k][0];ln(x,X(q),Y(thr)-6,X(q),Y(thr)+6,css("--amber"),2)}}
+function upd25(){var m=B.sliceMeasure(V("y25"),V("thr25"));
+  $("#r25").textContent="width "+f1(m.width)+" mm (true chord "+f1(m.trueW)+") · first layer "+f2(m.rind)+" mm · "+m.cross+" crossings";
+  $("#m25").innerHTML="<p>The field answers σ(x, y, z) at any point, so a slice is just many queries along a line:  σ(x, y₀) for x ∈ [−15, 15] mm.</p><p>Edges = where σ crosses the threshold τ = "+f2(V("thr25"))+".</p><p>Width = last crossing − first crossing = <span class='hl'>"+f1(m.width)+" mm</span>. For an ellipse with half-axes 12 and 10 mm, the true chord at y₀ is 2·12·√(1 − y₀²/10²) = "+f1(m.trueW)+" mm.</p><p>First layer (rind, if τ is between pith and rind density) = second crossing − first = "+f2(m.rind)+" mm.</p><p class='okc'>Same idea as a CT scan, but the 'scanner' is a trained network you can query at any angle after capture. Slide 7 lists medical imaging and archaeology for this reason.</p>"}
+
+/* 26 · LiDAR fusion */
+function draw26(){var x=cx.n26,Bl=V("B26"),e=V("e26"),sl=V("l26"),Z=V("Z26");bg(x);
+  var L=70,R=610,T=44,Bt=310;function X(z){return L+Math.log10(z)/Math.log10(40)*(R-L)}function Y(s){return Bt-(Math.log10(s)+3)/3.6*(Bt-T)}
+  axes(x,L,R,T,Bt,"distance Z (m, log)","depth error (m, log)");[1,2,5,10,20,40].forEach(function(v){txt(x,""+v,X(v),Bt+14,css("--dim"),10,"center")});[0.001,0.01,0.1,1].forEach(function(v){ln(x,L,Y(v),R,Y(v),css("--line"),1);txt(x,""+v,L-6,Y(v)+3,css("--dim"),10,"right")});
+  function zs(i){return Math.pow(10,i/100*Math.log10(40))}
+  curve(x,101,function(i){return X(zs(i))},function(i){return Y(M4.clamp(B.fuse(zs(i),1200,Bl,e,sl).ss,1e-3,3.9))},css("--amber"),2);
+  curve(x,101,function(i){return X(zs(i))},function(i){return Y(sl)},css("--sky"),2);
+  curve(x,101,function(i){return X(zs(i))},function(i){return Y(B.fuse(zs(i),1200,Bl,e,sl).sf)},css("--ok"),3,[6,3]);
+  var f=B.fuse(Z,1200,Bl,e,sl);ln(x,X(Z),T,X(Z),Bt,css("--dim"),1,[2,3]);dot(x,X(Z),Y(f.sf),5,css("--ok"));
+  txt(x,"amber: stereo · blue: LiDAR · green dashed: fused",L,16,css("--dim"),10)}
+function upd26(){var f=B.fuse(V("Z26"),1200,V("B26"),V("e26"),V("l26"));
+  $("#r26").textContent="at "+f1(V("Z26"))+" m: stereo "+f3(f.ss)+" m · LiDAR "+f3(f.sl)+" m · fused "+f3(f.sf)+" m · LiDAR weight "+f0(100*f.wl)+"%";
+  $("#m26").innerHTML="<p>Stereo:  σ_s = Z² · Δd / (f · B) = "+f1(V("Z26"))+"² × "+f2(V("e26"))+" / (1200 × "+f2(V("B26"))+") = "+f3(f.ss)+" m</p><p>LiDAR:  σ_L ≈ constant = "+f3(f.sl)+" m</p><p>Inverse-variance fusion:  Ẑ = w_L Z_L + (1 − w_L) Z_s,   w_L = (1/σ_L²) / (1/σ_L² + 1/σ_s²) = "+f2(f.wl)+"</p><p>σ_fused = (1/σ_L² + 1/σ_s²)^(−½) = <span class='hl'>"+f3(f.sf)+" m</span></p><p class='okc'>Photos give dense color and fine detail up close; LiDAR gives true scale and steady depth far away. Fusing them is what slide 8 means by multimodal.</p>"}
+
+/* 29 · generalization */
+var seed29=3;
+function draw29(){var x=cx.n29,r=B.fitNew(V("nm29"),V("k29"),V("sd29"),seed29);bg(x);
+  var L=40,R=610,T=44,Bt=320;function X(i){return L+(i+0.5)/B.PG*(R-L)}function Y(v){return Bt-(v+0.1)/1.7*(Bt-T)}
+  axes(x,L,R,T,Bt,"position across the plant","height");
+  curve(x,B.PG,X,function(i){return Y(r.tru[i])},css("--sky"),3);
+  curve(x,B.PG,X,function(i){return Y(M4.clamp(r.scratch[i],-0.1,1.6))},css("--amber"),2);
+  curve(x,B.PG,X,function(i){return Y(M4.clamp(r.pri[i],-0.1,1.6))},css("--ok"),2,[6,3]);
+  r.obs.forEach(function(o){dot(x,X(o[0]),Y(o[1]),4,css("--fg"))});
+  txt(x,"blue: new plant · white: measurements · amber: from scratch · green dashed: with prior",L,16,css("--dim"),10)}
+function upd29(){var n=V("nm29"),k=V("k29"),sd=V("sd29"),r=B.fitNew(n,k,sd,seed29),a=0,b=0;for(var s=1;s<=20;s++){var q=B.fitNew(n,k,sd,s);a+=q.es/20;b+=q.ep/20}
+  $("#r29").textContent="this plant: scratch "+f3(r.es)+", prior "+f3(r.ep)+" · 20 plants: scratch "+f3(a)+", prior "+f3(b)+" · prior explains "+f0(100*r.expl)+"%";
+  $("#m29").innerHTML="<p>Training: 300 plants → mean shape μ and the top shapes e₁ … e_k (principal components) of their covariance.</p><p>New plant:  p ≈ μ + Σⱼ zⱼ eⱼ   with only k = "+k+" unknown numbers zⱼ</p><p>Fit z by least squares on the "+n+" measurements.</p><p>From scratch: 17 unknown numbers (16 bumps + 1), with no idea what plants look like.</p><p>The first "+k+" shapes explain <span class='hl'>"+f0(100*r.expl)+"%</span> of the variation between plants.</p><p class='okc'>Generalizable NeRFs (pixelNeRF, feed-forward models such as VGGT) learn this prior from many scenes, so a new scene needs few views and little or no retraining.</p>"}
+
+/* 30 · generative + 4D */
+var seed30=1;
+function draw30(){var x=cx.n30,S=B.sample(V("k30"),seed30);bg(x);
+  S.forEach(function(p,k){var ox=14+k*122,oy=40,w=110,h=170;x.strokeStyle=css("--line");x.strokeRect(ox,oy,w,h);
+    x.beginPath();x.moveTo(ox,oy+h);for(var i=0;i<B.PG;i++){x.lineTo(ox+(i+0.5)/B.PG*w,oy+h-M4.clamp(p[i],0,1.6)/1.6*(h-6))}x.lineTo(ox+w,oy+h);x.closePath();x.fillStyle=css("--ok");x.globalAlpha=.6;x.fill();x.globalAlpha=1;txt(x,"new plant "+(k+1),ox+w/2,oy+h+14,css("--dim"),10,"center")});
+  txt(x,"generated from the prior: random numbers in, plausible plants out",14,24,css("--dim"),10);
+  var F=V("F30"),M=V("ms30"),d=V("d30"),a=F*M,b=M+F*d,L=150,R=600,y0=268;function X(v){return L+Math.log10(Math.max(v,1))/5*(R-L)}
+  txt(x,"one model per step",L-8,y0+16,css("--fg"),11,"right");x.fillStyle=css("--amber");x.fillRect(L,y0+4,X(a)-L,18);txt(x,mb(a),X(a)+6,y0+18,css("--fg"),11);
+  txt(x,"canonical + change",L-8,y0+50,css("--fg"),11,"right");x.fillStyle=css("--ok");x.fillRect(L,y0+38,X(b)-L,18);txt(x,mb(b),X(b)+6,y0+52,css("--fg"),11)}
+function upd30(){var F=V("F30"),M=V("ms30"),d=V("d30"),a=F*M,b=M+F*d;
+  $("#r30").textContent="4D storage: "+mb(a)+" per-step vs "+mb(b)+" canonical + change ("+f1(a/b)+"× less)";
+  $("#m30").innerHTML="<h4>Generative</h4><p>New plant = μ + Σⱼ zⱼ √λⱼ eⱼ,   zⱼ ~ Normal(0, 1),  using "+V("k30")+" shapes</p><p>λⱼ is the variance of shape j in the training plants, so samples vary as much as real plants do.</p><h4>4D</h4><p>Per step:  F × M = "+F+" × "+M+" MB = "+mb(a)+"</p><p>Canonical + change:  M + F × Δ = "+M+" + "+F+" × "+f2(d)+" = <span class='hl'>"+mb(b)+"</span></p><p class='okc'>Real generative 3D models (diffusion over splats or neural fields) and 4D NeRFs are far bigger, but they rest on these same two ideas.</p>"}
+
+/* ================= presenter controller ================= */
+var typed={};function typeset(i){if(typed[i]||!document.querySelector('.notes'))return;var MJ=window.MathJax;if(MJ&&MJ.typesetPromise){var el=document.querySelector('section.step[data-i="'+i+'"] .notes');if(el){typed[i]=1;MJ.typesetPromise([el]).catch(function(){typed[i]=0})}}else setTimeout(function(){typeset(i)},400)}
+var CANV=CONCEPTS.map(function(c){return c.cv});
+var cx={};CANV.forEach(function(id){cx[id]=mk(id)});
+var FN={c1a:[draw1a,upd1a],c1b:[draw1b,upd1b],c1c:[draw1c,upd1c],c2a:[draw2a,upd2a],c2b:[draw2b,upd2b],c2c:[draw2c,upd2c],c3a:[draw3a,upd3a],c3b:[draw3b,upd3b],c3c:[draw3c,upd3c],
+ c4a:[draw4a,upd4a],c4b:[draw4b,upd4b],c4c:[draw4c,upd4c],c5a:[draw5a,upd5a],c5b:[draw5b,upd5b],c5c:[draw5c,upd5c],c6a:[draw6a,upd6a],c6b:[draw6b,upd6b],c6c:[draw6c,upd6c],
+ n01:[draw01,upd01],n05:[draw05,upd05],n11:[draw11,upd11],n17:[draw17,upd17],n20:[draw20,upd20],n21:[draw21,upd21],n22:[draw22,upd22],n24:[draw24,upd24],n25:[draw25,upd25],n26:[draw26,upd26],n29:[draw29,upd29],n30:[draw30,upd30]};
+var N=CONCEPTS.length,cur=0;
+function refresh(i){var f=FN[CANV[i]];f[1]();f[0]()}
+function go(i){
+  cur=Math.max(0,Math.min(N-1,i));
+  document.querySelectorAll(".step").forEach(function(s){s.hidden=(+s.getAttribute("data-i")!==cur)});
+  $("#count").innerHTML=(cur<9?"0":"")+(cur+1)+" <span>/ "+N+"</span>";
+  document.querySelectorAll(".lec").forEach(function(b){b.setAttribute("aria-current",b.getAttribute("data-lec")===CONCEPTS[cur].lec?"true":"false")});
+  document.querySelectorAll(".ix a").forEach(function(a,k){a.setAttribute("aria-current",k===cur?"true":"false")});
+  $("#prev").disabled=cur===0;$("#next").disabled=cur===N-1;
+  refresh(cur);window.scrollTo(0,0);typeset(cur);
+  try{history.replaceState(null,"","#c"+(cur+1))}catch(e){}
+}
+$("#prev").addEventListener("click",function(){go(cur-1)});
+$("#next").addEventListener("click",function(){go(cur+1)});
+document.querySelectorAll(".lec").forEach(function(b){b.addEventListener("click",function(){var L=b.getAttribute("data-lec");for(var k=0;k<N;k++)if(CONCEPTS[k].lec===L){go(k);break}})});
+document.querySelectorAll(".ix a").forEach(function(a,k){a.addEventListener("click",function(e){e.preventDefault();$("#ixd").open=false;go(k)})});
+document.addEventListener("keydown",function(e){var t=e.target&&e.target.tagName;if(t==="INPUT")return;if(e.key==="ArrowRight"||e.key==="PageDown"){e.preventDefault();go(cur+1)}if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1)}});
+document.querySelectorAll("[data-rev]").forEach(function(b){b.addEventListener("click",function(){var el=document.getElementById(b.getAttribute("data-rev"));el.hidden=!el.hidden;b.textContent=el.hidden?"Reveal":"Hide"})});
+document.querySelectorAll("[data-math]").forEach(function(b){var base=b.textContent;b.addEventListener("click",function(){var el=document.getElementById(b.getAttribute("data-math"));el.hidden=!el.hidden;b.textContent=el.hidden?base:"∑ Hide the math"})});
+$("#projBtn").addEventListener("click",function(){var on=document.documentElement.classList.toggle("proj");this.setAttribute("aria-pressed",on?"true":"false")});
+$("#fsBtn").addEventListener("click",function(){try{var p=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){})}catch(e){}});
+function onIn(ids,fn){ids.forEach(function(id){$("#"+id).addEventListener("input",fn)})}
+function wire(cv,ids){onIn(ids,function(){refresh(CANV.indexOf(cv))})}
+wire("c1a",["e1a","b1a","rho1a"]);wire("c1b",["e1b","v1b","ks1b","s1b"]);wire("c1c",["a1c","F1c","t1c"]);
+wire("c2a",["k2a","t2a","ed2a"]);wire("c2b",["sp2b","sd2b"]);$("#new2b").addEventListener("click",function(){seed2b++;refresh(CANV.indexOf("c2b"))});wire("c2c",["n2c","e2c","x2c"]);
+wire("c3a",["th3a","sk3a"]);wire("c3b",["K3b","sh3b","s3b"]);wire("c3c",["h3c","d3c","L3c"]);
+onIn(["nL4a","T4a"],function(){upd4a();draw4a()});wire("c4b",["b4b","p4b"]);wire("c4c",["N4c","dg4c","lt4c"]);group("#bitBtns","data-bits",function(v){bits4=+v;upd4c();draw4c()});
+wire("c5a",["h5a","sp5a","tf5a"]);wire("c5b",["K5b","s5b"]);wire("c5c",["n5c","a5c"]);$("#st5c").addEventListener("change",function(){upd5c();draw5c()});
+wire("c6a",["z6a","sd6a","bl6a"]);wire("c6b",["A6b","N6b","w6b"]);wire("c6c",["S6c","o6c","q6c"]);
+group("#matBtns","data-mat",function(v){mat01=v;upd01();draw01()});wire("n01",["az01","el01"]);
+wire("n05",["nv05","s05","sd05"]);$("#new05").addEventListener("click",function(){seed05++;upd05();draw05()});
+wire("n11",["y11","b11","g11","th11"]);wire("n17",["ns17","sd17","K17"]);wire("n20",["v20","s20"]);wire("n21",["bud21"]);
+group("#cmpBtns","data-cmp",function(v){cmp22=v;upd22();draw22()});wire("n22",["amt22"]);
+wire("n24",["w24","o24","t24"]);wire("n25",["y25","thr25"]);wire("n26",["B26","e26","l26","Z26"]);
+wire("n29",["nm29","k29","sd29"]);$("#new29").addEventListener("click",function(){seed29++;upd29();draw29()});
+wire("n30",["k30","F30","ms30","d30"]);$("#new30").addEventListener("click",function(){seed30++;draw30()});
+$("#themeBtn").addEventListener("click",function(){var r=document.documentElement,dark=r.getAttribute("data-theme")==="dark"||(!r.getAttribute("data-theme")&&!window.matchMedia("(prefers-color-scheme: light)").matches);r.setAttribute("data-theme",dark?"light":"dark");refresh(cur)});
+window.matchMedia("(prefers-color-scheme: light)").addEventListener("change",function(){refresh(cur)});
+var hm=(location.hash||"").match(/^#c(\d+)$/);go(hm?+hm[1]-1:0);
+})();
+
+</script>
+
+</body>
+</html>
